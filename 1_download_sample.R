@@ -21,11 +21,11 @@ sample <- included_data %>%
 ## save the entries from ClinicalTrials.gov and DRKS separately
 sample %>%
   rename(nctid = 'id') %>%
-  filter(str_detect(nctid, 'NCT')) %>%
+  filter(registry == "ClinicalTrials.gov") %>%
   write_csv('nctids.csv')
 sample %>%
   rename(drksid = 'id') %>%
-  filter(str_detect(drksid, 'DRKS'))  %>%
+  filter(registry == "DRKS")  %>%
   write_csv('drksids.csv')
 
 ## The full historical versions of trial registry entries in this
