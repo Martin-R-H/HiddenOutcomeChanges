@@ -9,7 +9,7 @@ data <- read_csv('https://raw.githubusercontent.com/maia-sh/intovalue-data/main/
 
 ## apply our predefined inclusion criteria and count the rows
 included_data <- data %>%
-  filter(iv_interventional == TRUE & is_randomized == TRUE & is_publication_5y == TRUE) # talk to Maia
+  filter(iv_interventional == TRUE & is_randomized == TRUE & (is_publication_2y == TRUE | is_publication_5y == TRUE))
 
 nrow(included_data)
 # 1800
@@ -33,3 +33,8 @@ sample_DRKS <- sample %>%
 clinicaltrials_gov_download(sample_ct, 'historical_versions_ct.csv')
 drks_de_download(sample_DRKS, 'historical_versions_DRKS.csv')
 
+## save the IntoValue sample, too
+included_data_sample <- included_data %>%
+  filter(id %in% sample$id) # not 25, as there are two duplicates - how to handle these?
+included_data_sample %>%
+  write_csv('included_data_IntoValue.csv')

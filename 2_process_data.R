@@ -27,7 +27,8 @@ data_ctxxxxx <- prettify(data_ct)
 
 
 ## TO DO:
+## rename nctid and drksid to id
 ## rename overall_status (ct) and recruitment_status (DRKS) to status
 ## (DRKS) start_date to study_start_date
 ## primary_completion_date (ct) and closing_date (DRKS) to completion_date
-## primary_completion_date_type - there need to be NAs in DRKS, as it does not have that variable
+## primary_completion_date_type - there need to be NAs in DRKS, as it does not have that variable - but rename to completion_date_type
