@@ -35,6 +35,7 @@ drks_de_download(sample_DRKS, 'historical_versions_DRKS.csv')
 
 ## save the IntoValue sample, too
 included_data_sample <- included_data %>%
-  filter(id %in% sample$id) # not 25, as there are two duplicates - how to handle these?
+  filter(id %in% sample$id) %>%
+  filter(!(is_dupe == TRUE & iv_version == 1)) # there are two duplicates, and I removed the IV 1 versions - ok?
 included_data_sample %>%
   write_csv('included_data_IntoValue.csv')
