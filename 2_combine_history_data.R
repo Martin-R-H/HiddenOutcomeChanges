@@ -1,9 +1,9 @@
 library(tidyverse)
 library(jsonlite)
+library(tidyjson)
 
 ## Read in the files that contain all historical versions of trials
 ## in our sample
-## downloaded on 02-12-2021 (piloting)
 data_ct <- read_csv("historical_versions_ct.csv")
 data_drks <- read_csv("historical_versions_DRKS.csv")
 
@@ -30,3 +30,23 @@ data <- bind_rows(data_ct, data_drks)
 ## save the dataset
 data %>%
   write_csv('combined_history_data.csv')
+
+
+## some desperate code bits to solve the outcomes problem above
+
+# sss <- data_ct %>%
+#   select(nctid, outcome_measures)
+# sss2 <- toJSON(data_ct$outcome_measures)
+# str(sss)
+# sss3 <- as.data.frame(jsonlite::fromJSON(sss2)) %>%
+#   flatten()
+# 
+# read_json(data_ct$outcome_measures)
+# 
+# yyy <- as.data.frame(data_ct$outcome_measures) %>% tbl_json()
+# 
+# xxx <- tbl_json(sss, json.list = sss$outcome_measures)
+# 
+# xxx2 <- spread_values(xxx$outcome_measures)
+# 
+# xxx3 <- unnest_longer(xxx2, ..JSON)

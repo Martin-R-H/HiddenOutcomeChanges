@@ -4,7 +4,7 @@ library(cthist)
 set.seed(946)
 
 ## download the complete IntoValue 1 and 2 datasets from GitHub
-## last downloaded on 02-12-2021
+## (insert last download date here, maybe)
 data <- read_csv('https://raw.githubusercontent.com/maia-sh/intovalue-data/main/data/processed/trials.csv')
 
 ## apply our predefined inclusion criteria and count the rows
@@ -30,6 +30,7 @@ sample_DRKS <- sample %>%
   as.vector()
 
 ## download the historical versions from ClinicalTrials.gov and DRKS separately
+## (insert last download date here, maybe)
 clinicaltrials_gov_download(sample_ct, 'historical_versions_ct.csv')
 drks_de_download(sample_DRKS, 'historical_versions_DRKS.csv')
 
