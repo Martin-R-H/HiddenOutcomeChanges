@@ -48,17 +48,47 @@ for (z in 2:nrow(dat_ct)) {
 ## separately for each dataset (to ease merging them), drop all variables
 ## that we do not need and mutate others
 dat_ct <- dat_ct %>%
-  select(!c(enrolment, enrolment_type, min_age, max_age, sex, gender_based, accepts_healthy_volunteers, outcome_measures, contacts, sponsor_collaborators)) %>%
+  select(!c(
+    enrolment,
+    enrolment_type,
+    min_age,
+    max_age,
+    sex,
+    gender_based,
+    accepts_healthy_volunteers,
+    outcome_measures,
+    contacts,
+    sponsor_collaborators
+    )) %>%
   bind_cols(dat_ct_outcomes) %>%
-  rename(id = nctid, status = overall_status, completion_date = primary_completion_date, completion_date_type = primary_completion_date_type)
+  rename(
+    id = nctid,
+    status = overall_status,
+    completion_date = primary_completion_date,
+    completion_date_type = primary_completion_date_type
+    )
 dat_drks <- dat_drks %>%
   mutate(criteria = paste('INCLUSION CRITERIA:', inclusion_criteria, 'EXCLUSION_CRITERIA:', exclusion_criteria)) %>%
-  select(!c(enrolment, enrolment_type, min_age, max_age, gender, contacts, inclusion_criteria, exclusion_criteria)) %>%
+  select(!c(
+    enrolment,
+    enrolment_type,
+    min_age,
+    max_age,
+    gender,
+    contacts,
+    inclusion_criteria,
+    exclusion_criteria
+    )) %>%
   add_column(completion_date_type = NA, other_outcomes = NA) %>%
   relocate(criteria, .before = primary_outcomes) %>%
   relocate(completion_date_type, .after = closing_date) %>%
   relocate(other_outcomes, .after = secondary_outcomes) %>%
-  rename(id = drksid, status = recruitment_status, study_start_date = start_date, completion_date = closing_date)
+  rename(
+    id = drksid,
+    status = recruitment_status,
+    study_start_date = start_date,
+    completion_date = closing_date
+    )
 
 ## combine the datasets
 dat <- bind_rows(dat_ct, dat_drks)

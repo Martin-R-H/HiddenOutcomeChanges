@@ -3,6 +3,9 @@ library(tidyverse)
 ## read in the file
 dat <- read_csv('combined_history_data.csv')
 
+## merge with the data from ovid
+####
+
 ## create a 'date of first registration' variable
 dat <- dat %>%
   group_by(id) %>%

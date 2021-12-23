@@ -19,7 +19,11 @@ sample <- dat_IV_included %>%
   select(id) %>%
   sample_n(25) # pilot sample
 
-## save the entries from ClinicalTrials.gov and DRKS separately
+## save the sample nctids for later 
+sample %>%
+  write_csv('nctids.csv')
+
+## split the entries from ClinicalTrials.gov and DRKS
 sample_ct <- sample %>%
   filter(str_detect(id, 'NCT')) %>%
   unlist() %>%
