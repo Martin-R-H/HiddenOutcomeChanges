@@ -3,6 +3,10 @@ library(xml2)
 library(httr)
 library(jsonlite)
 
+## ----
+## automatically extract PMIDs for every NCT or DRKS number
+## (script by Murph Carlisle)
+
 ## Must contain a valid Pubmed API key
 ## Hint: Make an NCBI account, go here:
 ## https://www.ncbi.nlm.nih.gov/account/settings/
@@ -176,4 +180,19 @@ if (sum(! input$nctid %in% read_csv(output_filename, col_types=cols())$nctid) ==
 
 }
 
+## ----
+## feed the extracted PMIDs to OVID
 
+dat_pmid <- read_csv('nctid-pmid.csv') %>%
+  select(!c(si, tiab))
+
+## now take the PMIDs from the 'pmid' column in dat_ovid,
+## and feed them to OVID, as described in the file named
+## 'rough-instructions-for-getting-pub-hist-from-ovid.docx'
+
+## read the OVID dataset in and combine with the IntoValue
+## dataset
+
+dat_ovid <- ()
+
+## TO DO TO DO TO DO

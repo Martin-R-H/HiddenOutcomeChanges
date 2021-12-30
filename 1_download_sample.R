@@ -19,8 +19,10 @@ sample <- dat_IV_included %>%
   select(id) %>%
   sample_n(25) # pilot sample
 
-## save the sample nctids for later 
+## save the sample nctids for later, when the PMIDs and publication
+## data from Ovid will be extracted
 sample %>%
+  rename(nctid = id) %>%
   write_csv('nctids.csv')
 
 ## split the entries from ClinicalTrials.gov and DRKS
