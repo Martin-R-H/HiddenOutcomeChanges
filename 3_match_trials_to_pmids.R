@@ -2,8 +2,10 @@ library(tidyverse)
 library(xml2)
 library(httr)
 library(jsonlite)
+library(clipr)
+library(readxl)
 
-## ----
+## ---- METHOD 1: EXTRACTION ----
 ## automatically extract PMIDs for every NCT or DRKS number
 ## (script by Murph Carlisle)
 
@@ -180,19 +182,86 @@ if (sum(! input$nctid %in% read_csv(output_filename, col_types=cols())$nctid) ==
 
 }
 
-## ----
+## ---- METHOD 1: COMBINATION ----
 ## feed the extracted PMIDs to OVID
 
 dat_pmid <- read_csv('nctid-pmid.csv') %>%
   select(!c(si, tiab))
 
-## now take the PMIDs from the 'pmid' column in dat_ovid,
-## and feed them to OVID, as described in the file named
+ovid_search <- as.character(dat_pmid$pmid) %>%
+  str_replace_na() %>%
+  str_replace_all('NA', ' ') %>%
+  str_replace_all('\\[', ' ') %>%
+  str_replace_all('\\]', ' ') %>%
+  str_replace_all(',', ' ') %>%
+  str_trim(side = 'both') %>%
+  str_squish() %>%
+  str_subset('.+') %>%
+  str_replace_all(' ', ' or ') %>%
+  str_flatten(collapse = ' or ')
+
+ovid_search <- paste0('(', ovid_search, ').ui')
+write_clip(ovid_search)
+
+## now take the PMIDs from the clipboard, and feed them to
+## OVID, as described in the file named
 ## 'rough-instructions-for-getting-pub-hist-from-ovid.docx'
+
+## save the resulting Excel sheet to this working directory
 
 ## read the OVID dataset in and combine with the IntoValue
 ## dataset
 
-dat_ovid <- ()
+dat_IV_included_sample <- read_csv('included_data_IntoValue.csv')
 
-## TO DO TO DO TO DO
+dat_ovid <- read_excel('citation.xls')
+range <- paste0('A2:G', nrow(dat_ovid))
+dat_ovid <- read_excel('citation.xls', range = range) %>%
+  select(UI, PH) %>%
+  filter(UI %in% dat_IV_included_sample$pmid)
+
+dat_IV_included_sample <- dat_IV_included_sample %>%
+  left_join(dat_ovid, by = c('pmid' = 'UI'))
+
+## create separate variables for received, revised, and published dates
+
+## save the new file
+
+
+## ---- METHOD 2: EXTRACTION ----
+
+dat_IV_included_sample2 <- read_csv('included_data_IntoValue.csv') %>%
+  select(pmid)
+
+## ---- METHOD 2: COMBINATION ----
+## feed the extracted PMIDs to OVID
+
+ovid_search2 <- as.character(dat_IV_included_sample2$pmid) %>%
+  str_replace_na() %>%
+  str_replace_all('NA', ' ') %>%
+  str_squish() %>%
+  str_subset('.+') %>%
+  str_flatten(collapse = ' or ')
+
+ovid_search2 <- paste0('(', ovid_search, ').ui')
+write_clip(ovid_search2)
+
+## now take the PMIDs from the clipboard, and feed them to
+## OVID, as described in the file named
+## 'rough-instructions-for-getting-pub-hist-from-ovid.docx'
+
+## save the resulting Excel sheet to this working directory
+
+## read the OVID dataset in and combine with the IntoValue
+## dataset
+
+dat_IV_included_sample <- read_csv('included_data_IntoValue.csv')
+
+dat_ovid2 <- read_excel('citation2.xls')
+range <- paste0('A2:G', nrow(dat_ovid2))
+dat_ovid2 <- read_excel('citation2.xls', range = range) %>%
+  select(UI, PH) %>%
+  filter(UI %in% dat_IV_included_sample$pmid)
+
+dat_IV_included_sample <- dat_IV_included_sample %>%
+  left_join(dat_ovid, by = c('pmid' = 'UI'))
