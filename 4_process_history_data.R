@@ -3,9 +3,6 @@ library(tidyverse)
 ## read in the file
 dat <- read_csv('combined_history_data.csv')
 
-## merge with the data from ovid
-####
-
 ## create a 'date of first registration' variable
 dat <- dat %>%
   group_by(id) %>%
@@ -43,14 +40,13 @@ dat$postcompletion_temp <- ifelse(
 ## create a variable that represents the first 'launch' date, i.e.
 ## the first date where the trial registry entry that has a status of
 ## Recruiting, Enrolling by invitation, Active, not recruiting, Completed,
-## Terminated (ClinicalTrials.gov terminologxy), Recruiting ongoing, Recruiting
+## Terminated (ClinicalTrials.gov terminology), Recruiting ongoing, Recruiting
 ## complete, follow-up complete, Recruiting stopped after recruiting started, or
 ## Recruiting suspended on temporary hold (DRKS terminology) - before this point,
 ## the trials were not yet recruiting)
 dat<- dat %>%
   group_by(id) %>%
   mutate(original_start_date = study_start_date[which.min(postlaunch_temp)])
-# code has a problems with NAs
 
 ## create a variable that represents the first 'completion' date, i.e.
 ## the first date where the trial registry entry that has a status of

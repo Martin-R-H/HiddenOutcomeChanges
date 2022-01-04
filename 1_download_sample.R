@@ -15,34 +15,34 @@ nrow(dat_IV_included)
 # 1800
 
 ## draw a sample, at first for piloting
-sample <- dat_IV_included %>%
+sample_nctids <- dat_IV_included %>%
   select(id) %>%
   sample_n(25) # pilot sample
 
-## save the sample nctids for later, when the PMIDs and publication
-## data from Ovid will be extracted
-sample %>%
-  rename(nctid = id) %>%
-  write_csv('nctids.csv')
-
 ## split the entries from ClinicalTrials.gov and DRKS
-sample_ct <- sample %>%
+sample_nctids_ct <- sample_nctids %>%
   filter(str_detect(id, 'NCT')) %>%
   unlist() %>%
   as.vector()
-sample_DRKS <- sample %>%
+sample_nctids_DRKS <- sample_nctids %>%
   filter(str_detect(id, 'DRKS')) %>%
   unlist() %>%
   as.vector()
 
 ## download the historical versions from ClinicalTrials.gov and DRKS separately
 ## (insert last download date here, maybe)
-clinicaltrials_gov_download(sample_ct, 'historical_versions_ct.csv')
-drks_de_download(sample_DRKS, 'historical_versions_DRKS.csv')
+clinicaltrials_gov_download(sample_nctids_ct, 'historical_versions_ct.csv')
+drks_de_download(sample_nctids_DRKS, 'historical_versions_DRKS.csv')
 
 ## save the IntoValue sample, too
-dat_IV_included_sample <- dat_IV_included %>%
-  filter(id %in% sample$id) %>%
+dat_IV_sample <- dat_IV_included %>%
+  filter(id %in% sample_nctids$id) %>%
   filter(!(is_dupe == TRUE & iv_version == 1)) # remove duplicates that are present in both IntoValue versions
-dat_IV_included_sample %>%
-  write_csv('included_data_IntoValue.csv')
+dat_IV_sample %>%
+  write_csv('sample_IntoValue.csv')
+
+## save the sample nctids for possible later use
+## to extract PMIDs (deprecated)
+# sample_nctids %>%
+#   rename(nctid = id) %>%
+#   write_csv('nctids.csv')
