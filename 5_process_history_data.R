@@ -44,9 +44,28 @@ dat$postcompletion_temp <- ifelse(
 ## complete, follow-up complete, Recruiting stopped after recruiting started, or
 ## Recruiting suspended on temporary hold (DRKS terminology) - before this point,
 ## the trials were not yet recruiting)
-dat<- dat %>%
+dat2 <- dat %>%
+  coalesce(postlaunch_temp, 0) %>%
+  # filter(!(id == c('NCT01601769'))) %>%
   group_by(id) %>%
   mutate(original_start_date = study_start_date[which.min(postlaunch_temp)])
+# not working due to NAs in the postlaunch_temp variable (there are groups in which there are only NAs)
+# dat<- dat %>%
+#   group_by(id) %>%
+#   ifelse(
+#     is.na(min(postlaunch_temp)),
+#     mutate(original_start_date = study_start_date[which.min(postlaunch_temp)]),
+#     mutate(original_start_date = NA)
+#   )
+# 
+# dat<- dat %>%
+#   group_by(id) %>%
+#   ifelse(
+#     is.na(cumsum(postlaunch_temp)),
+#     mutate(original_start_date = NA),
+#     mutate(original_start_date = study_start_date[which.min(postlaunch_temp)])
+#   )
+
 
 ## create a variable that represents the first 'completion' date, i.e.
 ## the first date where the trial registry entry that has a status of
@@ -54,11 +73,11 @@ dat<- dat %>%
 ## terminology), Recruiting complete, follow-up complete, or Recruiting
 ## stopped after recruiting started (DRKS terminology) - this is the 
 ## original completion date
-dat <- dat %>%
+dat3 <- dat %>%
+  filter(!(id == c('NCT00111345', 'NCT01601769'))) %>%
   group_by(id) %>%
   mutate(original_completion_date = postcompletion_temp[which.min(postcompletion_temp)])
 dat$original_completion_date <- as.Date(dat$original_completion_date, origin="1970-01-01")
-# code has a problems with NAs
 
 ## create a last completion date
 # TO DO

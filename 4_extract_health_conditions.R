@@ -33,6 +33,11 @@ length(unique(dat_aact2_filtered$nct_id))
 # 17
 # MeSH terms seem not to be available for all trials - we should go with just the conditions
 
+## save the files
+dat_aact_filtered %>%
+  write_csv('aact_health_conditions.csv')
+dat_aact2_filtered %>%
+  write_csv('aact_health_conditions_MeSH.csv')
 
 ## ---- DRKS ----
 
