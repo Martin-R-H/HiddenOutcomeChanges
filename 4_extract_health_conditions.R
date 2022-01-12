@@ -2,7 +2,7 @@ library(tidyverse)
 library(RPostgreSQL)
 
 ## read in the IntoValue data for our sample
-dat_IV_sample <- read_csv('sample_IntoValue.csv')
+dat_IV_sample <- read_csv('data/sample_IntoValue.csv')
 
 
 ## ---- ClinicalTrials.gov ----
@@ -35,9 +35,9 @@ length(unique(dat_aact2_filtered$nct_id))
 
 ## save the files
 dat_aact_filtered %>%
-  write_csv('aact_health_conditions.csv')
+  write_csv('data/aact_health_conditions.csv')
 dat_aact2_filtered %>%
-  write_csv('aact_health_conditions_MeSH.csv')
+  write_csv('data/aact_health_conditions_MeSH.csv')
 
 ## ---- DRKS ----
 
@@ -92,6 +92,10 @@ dat_DRKS <- bind_rows(dat_DRKS_IV1, dat_DRKS_IV2)
 
 ## check whether the row numbers add up
 nrow(dat_DRKS) == nrow(dat_DRKS_IV1) + nrow(dat_DRKS_IV2)
+
+## save the file
+dat_DRKS %>%
+  write_csv('data/DRKS_health_conditions.csv')
 
 ## restructure the data, but how? - talk to Murph and the others!
 ## its about how we structure the data, and which we extract

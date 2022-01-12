@@ -5,7 +5,7 @@ library(readxl)
 ## ---- Extraction using IV data----
 
 ## select the PMIDs from the IntoValue data
-dat_IV_sample <- read_csv('sample_IntoValue.csv')
+dat_IV_sample <- read_csv('data/sample_IntoValue.csv')
 
 ## feed the extracted PMIDs to OVID
 ovid_search <- as.character(dat_IV_sample$pmid) %>%
@@ -43,7 +43,7 @@ dat_IV_sample <- dat_IV_sample %>%
 
 ## save the file
 dat_IV_sample %>%
-  write_csv('sample_IntoValue.csv')
+  write_csv('data/sample_IntoValue.csv')
 
 ## ---- Extraction using an automated tool (deprecated) ----
 ## automatically extract PMIDs for every NCT or DRKS number

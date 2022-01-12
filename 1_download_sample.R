@@ -31,18 +31,18 @@ sample_nctids_DRKS <- sample_nctids %>%
 
 ## download the historical versions from ClinicalTrials.gov and DRKS separately
 ## (insert last download date here, maybe)
-clinicaltrials_gov_download(sample_nctids_ct, 'historical_versions_ct.csv')
-drks_de_download(sample_nctids_DRKS, 'historical_versions_DRKS.csv')
+clinicaltrials_gov_download(sample_nctids_ct, 'data/historical_versions_ct.csv')
+drks_de_download(sample_nctids_DRKS, 'data/historical_versions_DRKS.csv')
 
 ## save the IntoValue sample, too
 dat_IV_sample <- dat_IV_included %>%
   filter(id %in% sample_nctids$id) %>%
   filter(!(is_dupe == TRUE & iv_version == 1)) # remove duplicates that are present in both IntoValue versions
 dat_IV_sample %>%
-  write_csv('sample_IntoValue.csv')
+  write_csv('data/sample_IntoValue.csv')
 
 ## save the sample nctids for possible later use
 ## to extract PMIDs (deprecated)
 # sample_nctids %>%
 #   rename(nctid = id) %>%
-#   write_csv('nctids.csv')
+#   write_csv('data/nctids.csv')

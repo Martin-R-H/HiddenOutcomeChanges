@@ -1,7 +1,9 @@
 library(tidyverse)
 
+set.seed(946)
+
 ## read in the file
-dat <- read_csv('combined_history_data.csv')
+dat <- read_csv('data/combined_history_data.csv')
 
 ## create a 'date of first registration' variable
 dat <- dat %>%
@@ -116,18 +118,32 @@ dat <- dat %>%
   ungroup() %>%
   select(!c(temp_outcome_run))
 
-## save a version with all historial versions
-dat %>%
-  write_csv('processed_history_data.csv')
+## save a version with all historical versions
+# dat %>%
+#   write_csv('data/processed_history_data.csv')
 
 ## create a dataset with only those versions that have changes to the outcome, and add
 ## the IntoValue data
-dat_IV <- read_csv('included_data_IntoValue.csv') %>%
+dat_IV_sample <- read_csv('data/sample_IntoValue.csv') %>%
   select(c(id, registry, title, main_sponsor, study_type, intervention_type, phase, recruitment_status, allocation, start_date, primary_completion_date, doi, pmid, url, publication_date, pub_title, is_publication_2y, is_publication_5y))
-dat_Numbat <- dat %>%
-  filter(primary_outcome_changed == TRUE) %>%
-  left_join(dat_IV, by = 'id')
+# dat_Numbat <- dat %>%
+#   filter(primary_outcome_changed == TRUE) %>%
+#   left_join(dat_IV, by = 'id')
 
 ##  for Numbat, save a file with only those versions that have changes to the outcome
-dat_Numbat %>%
-  write_csv('export_to_Numbat.csv')
+# dat_Numbat %>%
+#   write_csv('data/export_to_Numbat.csv')
+
+
+#### ---- for a first piloting, save 5 of our IntoValue trials in a separate file ----
+
+## create a new sample first
+pilot_sample_1 <- sample(unique(dat_IV_sample$id), 5)
+
+dat_IV_sample %>%
+  filter(id %in% pilot_sample_1) %>%
+  write_csv('data/PILOT_5_IV.csv')
+
+dat %>%
+  filter(id %in% pilot_sample_1) %>%
+  write_csv('data/PILOT_5_HISTORICAL.csv')

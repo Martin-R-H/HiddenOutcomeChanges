@@ -1,0 +1,141 @@
+nct_id,mesh_term,mesh_type
+NCT00359918,Myocardial Infarction,mesh-list
+NCT00359918,Infarction,mesh-list
+NCT00359918,Ischemia,mesh-ancestor
+NCT00359918,Pathologic Processes,mesh-ancestor
+NCT00359918,Necrosis,mesh-ancestor
+NCT00359918,Myocardial Ischemia,mesh-ancestor
+NCT00359918,Heart Diseases,mesh-ancestor
+NCT00359918,Cardiovascular Diseases,mesh-ancestor
+NCT00359918,Vascular Diseases,mesh-ancestor
+NCT01651832,Colorectal Neoplasms,mesh-list
+NCT01651832,Intestinal Neoplasms,mesh-ancestor
+NCT01651832,Gastrointestinal Neoplasms,mesh-ancestor
+NCT01651832,Digestive System Neoplasms,mesh-ancestor
+NCT01651832,Neoplasms by Site,mesh-ancestor
+NCT01651832,Neoplasms,mesh-ancestor
+NCT01651832,Digestive System Diseases,mesh-ancestor
+NCT01651832,Gastrointestinal Diseases,mesh-ancestor
+NCT01651832,Colonic Diseases,mesh-ancestor
+NCT01651832,Intestinal Diseases,mesh-ancestor
+NCT01651832,Rectal Diseases,mesh-ancestor
+NCT01669382,Acute Coronary Syndrome,mesh-list
+NCT01669382,Angina Pectoris,mesh-list
+NCT01669382,"Angina, Stable",mesh-list
+NCT01669382,Myocardial Ischemia,mesh-ancestor
+NCT01669382,Heart Diseases,mesh-ancestor
+NCT01669382,Cardiovascular Diseases,mesh-ancestor
+NCT01669382,Vascular Diseases,mesh-ancestor
+NCT01669382,Chest Pain,mesh-ancestor
+NCT01669382,Pain,mesh-ancestor
+NCT01669382,Neurologic Manifestations,mesh-ancestor
+NCT01855035,Stroke,mesh-list
+NCT01855035,Atrial Fibrillation,mesh-list
+NCT01855035,Cerebrovascular Disorders,mesh-ancestor
+NCT01855035,Brain Diseases,mesh-ancestor
+NCT01855035,Central Nervous System Diseases,mesh-ancestor
+NCT01855035,Nervous System Diseases,mesh-ancestor
+NCT01855035,Vascular Diseases,mesh-ancestor
+NCT01855035,Cardiovascular Diseases,mesh-ancestor
+NCT01855035,"Arrhythmias, Cardiac",mesh-ancestor
+NCT01855035,Heart Diseases,mesh-ancestor
+NCT01855035,Pathologic Processes,mesh-ancestor
+NCT00664963,Arterial Occlusive Diseases,mesh-list
+NCT00664963,Vascular Diseases,mesh-ancestor
+NCT00664963,Cardiovascular Diseases,mesh-ancestor
+NCT01993056,Wounds and Injuries,mesh-list
+NCT02307396,Disease,mesh-list
+NCT02307396,Schizophrenia,mesh-list
+NCT02307396,Psychotic Disorders,mesh-list
+NCT02307396,Schizophrenia Spectrum and Other Psychotic Disorders,mesh-list
+NCT02307396,Pathologic Processes,mesh-ancestor
+NCT02307396,Mental Disorders,mesh-ancestor
+NCT00837603,Transposition of Great Vessels,mesh-list
+NCT00837603,Congenital Abnormalities,mesh-ancestor
+NCT00837603,"Heart Defects, Congenital",mesh-ancestor
+NCT00837603,Cardiovascular Abnormalities,mesh-ancestor
+NCT00837603,Cardiovascular Diseases,mesh-ancestor
+NCT00837603,Heart Diseases,mesh-ancestor
+NCT00893373,Leukemia,mesh-list
+NCT00893373,"Leukemia, Myeloid",mesh-list
+NCT00893373,"Leukemia, Myeloid, Acute",mesh-list
+NCT00893373,Neoplasms by Histologic Type,mesh-ancestor
+NCT00893373,Neoplasms,mesh-ancestor
+NCT01065337,Diabetic Foot,mesh-list
+NCT01065337,Ischemia,mesh-list
+NCT01065337,Pathologic Processes,mesh-ancestor
+NCT01065337,Diabetic Angiopathies,mesh-ancestor
+NCT01065337,Vascular Diseases,mesh-ancestor
+NCT01065337,Cardiovascular Diseases,mesh-ancestor
+NCT01065337,Foot Ulcer,mesh-ancestor
+NCT01065337,Leg Ulcer,mesh-ancestor
+NCT01065337,Skin Ulcer,mesh-ancestor
+NCT01065337,Skin Diseases,mesh-ancestor
+NCT01065337,Diabetes Complications,mesh-ancestor
+NCT01065337,Diabetes Mellitus,mesh-ancestor
+NCT01065337,Endocrine System Diseases,mesh-ancestor
+NCT01065337,Diabetic Neuropathies,mesh-ancestor
+NCT01225380,Infections,mesh-list
+NCT01225380,Hepatitis A,mesh-list
+NCT01225380,Hepatitis C,mesh-list
+NCT01225380,"Hepatitis C, Chronic",mesh-list
+NCT01225380,Hepatitis,mesh-list
+NCT01225380,"Hepatitis, Chronic",mesh-list
+NCT01225380,Liver Diseases,mesh-ancestor
+NCT01225380,Digestive System Diseases,mesh-ancestor
+NCT01225380,"Hepatitis, Viral, Human",mesh-ancestor
+NCT01225380,Virus Diseases,mesh-ancestor
+NCT01225380,Enterovirus Infections,mesh-ancestor
+NCT01225380,Picornaviridae Infections,mesh-ancestor
+NCT01225380,RNA Virus Infections,mesh-ancestor
+NCT01225380,Blood-Borne Infections,mesh-ancestor
+NCT01225380,Communicable Diseases,mesh-ancestor
+NCT01225380,Flaviviridae Infections,mesh-ancestor
+NCT01236807,Coronary Artery Disease,mesh-list
+NCT01236807,Myocardial Ischemia,mesh-list
+NCT01236807,Coronary Disease,mesh-list
+NCT01236807,"Angina, Stable",mesh-list
+NCT01236807,Ischemia,mesh-list
+NCT01236807,Heart Diseases,mesh-ancestor
+NCT01236807,Cardiovascular Diseases,mesh-ancestor
+NCT01236807,Arteriosclerosis,mesh-ancestor
+NCT01236807,Arterial Occlusive Diseases,mesh-ancestor
+NCT01236807,Vascular Diseases,mesh-ancestor
+NCT01236807,Pathologic Processes,mesh-ancestor
+NCT01236807,Angina Pectoris,mesh-ancestor
+NCT01236807,Chest Pain,mesh-ancestor
+NCT01236807,Pain,mesh-ancestor
+NCT01236807,Neurologic Manifestations,mesh-ancestor
+NCT01486329,Pancreatic Neoplasms,mesh-list
+NCT01486329,Digestive System Neoplasms,mesh-ancestor
+NCT01486329,Neoplasms by Site,mesh-ancestor
+NCT01486329,Neoplasms,mesh-ancestor
+NCT01486329,Endocrine Gland Neoplasms,mesh-ancestor
+NCT01486329,Digestive System Diseases,mesh-ancestor
+NCT01486329,Pancreatic Diseases,mesh-ancestor
+NCT01486329,Endocrine System Diseases,mesh-ancestor
+NCT01516827,Disease,mesh-list
+NCT01516827,"Stress Disorders, Traumatic",mesh-list
+NCT01516827,"Stress Disorders, Post-Traumatic",mesh-list
+NCT01516827,Pathologic Processes,mesh-ancestor
+NCT01516827,Trauma and Stressor Related Disorders,mesh-ancestor
+NCT01516827,Mental Disorders,mesh-ancestor
+NCT00079105,Lymphoma,mesh-list
+NCT00079105,Hodgkin Disease,mesh-list
+NCT00079105,Neoplasms by Histologic Type,mesh-ancestor
+NCT00079105,Neoplasms,mesh-ancestor
+NCT00079105,Lymphoproliferative Disorders,mesh-ancestor
+NCT00079105,Lymphatic Diseases,mesh-ancestor
+NCT00079105,Immunoproliferative Disorders,mesh-ancestor
+NCT00079105,Immune System Diseases,mesh-ancestor
+NCT00111345,Leukemia,mesh-list
+NCT00111345,"Leukemia, Myeloid",mesh-list
+NCT00111345,"Leukemia, Myeloid, Acute",mesh-list
+NCT00111345,Neoplasms by Histologic Type,mesh-ancestor
+NCT00111345,Neoplasms,mesh-ancestor
+NCT01541579,Crohn Disease,mesh-list
+NCT01541579,Inflammatory Bowel Diseases,mesh-ancestor
+NCT01541579,Gastroenteritis,mesh-ancestor
+NCT01541579,Gastrointestinal Diseases,mesh-ancestor
+NCT01541579,Digestive System Diseases,mesh-ancestor
+NCT01541579,Intestinal Diseases,mesh-ancestor

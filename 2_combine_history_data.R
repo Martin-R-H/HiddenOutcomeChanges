@@ -3,8 +3,8 @@ library(jsonlite)
 
 ## read in the files that contain all historical versions of trials
 ## in our sample
-dat_ct <- read_csv("historical_versions_ct.csv")
-dat_drks <- read_csv("historical_versions_DRKS.csv")
+dat_ct <- read_csv('data/historical_versions_ct.csv')
+dat_drks <- read_csv('data/historical_versions_DRKS.csv')
 
 ## in a first step, restructure the outcomes data from the ClinicalTrials.gov
 ## sample
@@ -95,4 +95,4 @@ dat <- bind_rows(dat_ct, dat_drks)
 
 ## save the dataset
 dat %>%
-  write_csv('combined_history_data.csv')
+  write_csv('data/combined_history_data.csv')
