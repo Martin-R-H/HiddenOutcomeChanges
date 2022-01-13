@@ -96,13 +96,13 @@ outcome_runs <- rle(paste(dat$id, dat$primary_outcomes))
 ## Step  2: Make an `outcome_run` column that assigns a number to each
 ## "run" of outcomes
 dat <- dat %>%
+  ungroup() %>%
   mutate(
     outcome_run = rep(
       seq_along(outcome_runs$lengths),
       outcome_runs$lengths
     )
   )
-# USED TO WORK ON MY WINDOWS PC. FUR UNKNOWN REASONS, IT DOES NOT ON MAC
 ## Step 3: Create a logical vector that indicates whether an
 ## outcome has been changed or not - this is done by grouping
 ## by "runs" of outcomes and selecting only the first of each
@@ -116,7 +116,7 @@ dat <- dat %>%
   )
   ) %>%
   ungroup() %>%
-  select(!c(temp_outcome_run))
+  select(!c(temp, outcome_run))
 
 ## save a version with all historical versions
 # dat %>%
