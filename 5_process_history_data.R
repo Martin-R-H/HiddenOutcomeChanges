@@ -2,6 +2,10 @@ library(tidyverse)
 
 set.seed(946)
 
+
+
+## ---- OLD STRATEGY: draw a sample of 25 ----
+
 ## read in the file
 dat <- read_csv('data/combined_history_data.csv')
 
@@ -147,3 +151,48 @@ dat_IV_sample %>%
 dat %>%
   filter(id %in% pilot_sample_1) %>%
   write_csv('data/PILOT_5_HISTORICAL.csv')
+
+
+
+## ---- NEW STRATEGY: run history scraper on all included trials ----
+
+
+## read in the file
+dat_all <- read_csv('data/combined_history_data_all.csv')
+
+## create a 'date of first registration' variable
+dat_all <- dat_all %>%
+  group_by(id) %>%
+  mutate(first_reg_date = min(version_date))
+
+## determine those versions with changes to their outcomes and mark them as such (logical vector)
+## Step 1: Identify "run" lengths for outcomes within a trial
+outcome_runs <- rle(paste(dat_all$id, dat_all$primary_outcomes))
+## Step  2: Make an `outcome_run` column that assigns a number to each
+## "run" of outcomes
+dat_all <- dat_all %>%
+  ungroup() %>%
+  mutate(
+    outcome_run = rep(
+      seq_along(outcome_runs$lengths),
+      outcome_runs$lengths
+    )
+  )
+## Step 3: Create a logical vector that indicates whether an
+## outcome has been changed or not - this is done by grouping
+## by "runs" of outcomes and selecting only the first of each
+dat_all <- dat_all %>%
+  group_by(outcome_run) %>%
+  mutate(temp = min(version_number)) %>%
+  mutate(primary_outcome_changed = ifelse(
+    version_number == temp,
+    TRUE,
+    FALSE
+  )
+  ) %>%
+  ungroup() %>%
+  select(!c(temp, outcome_run))
+
+## save the file
+dat_all %>%
+  write_csv('data/combined_history_data_all.csv')

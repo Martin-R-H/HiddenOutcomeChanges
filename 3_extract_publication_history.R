@@ -2,6 +2,10 @@ library(tidyverse)
 library(clipr)
 library(readxl)
 
+
+
+## ---- OLD STRATEGY: sample of 25 ----
+
 ## ---- Extraction using IV data----
 
 ## select the PMIDs from the IntoValue data
@@ -44,6 +48,14 @@ dat_IV_sample <- dat_IV_sample %>%
 ## save the file
 dat_IV_sample %>%
   write_csv('data/sample_IntoValue.csv')
+
+
+
+## ---- NEW STRATEGY: run history scraper on all included trials ----
+
+## we probably cannot reliably do this for all trials, so we have to stick to a sample
+
+
 
 ## ---- Extraction using an automated tool (deprecated) ----
 ## automatically extract PMIDs for every NCT or DRKS number
