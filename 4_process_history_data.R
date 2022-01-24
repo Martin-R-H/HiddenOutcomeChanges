@@ -2,10 +2,6 @@ library(tidyverse)
 
 set.seed(946)
 
-
-
-## ---- OLD STRATEGY: draw a sample of 25 ----
-
 ## read in the file
 dat <- read_csv('data/combined_history_data.csv')
 
@@ -50,28 +46,22 @@ dat$postcompletion_temp <- ifelse(
 ## complete, follow-up complete, Recruiting stopped after recruiting started, or
 ## Recruiting suspended on temporary hold (DRKS terminology) - before this point,
 ## the trials were not yet recruiting)
-dat2 <- dat %>%
-  coalesce(postlaunch_temp, 0) %>%
-  # filter(!(id == c('NCT01601769'))) %>%
-  group_by(id) %>%
-  mutate(original_start_date = study_start_date[which.min(postlaunch_temp)])
-# not working due to NAs in the postlaunch_temp variable (there are groups in which there are only NAs)
-# dat<- dat %>%
-#   group_by(id) %>%
-#   ifelse(
-#     is.na(min(postlaunch_temp)),
-#     mutate(original_start_date = study_start_date[which.min(postlaunch_temp)]),
-#     mutate(original_start_date = NA)
-#   )
-# 
-# dat<- dat %>%
-#   group_by(id) %>%
-#   ifelse(
-#     is.na(cumsum(postlaunch_temp)),
-#     mutate(original_start_date = NA),
-#     mutate(original_start_date = study_start_date[which.min(postlaunch_temp)])
-#   )
 
+## first, we have to create a temporary dataframe of those trials that have no 
+## 'postlaunch' value, i.e., they apparently never start recruiting
+dat_temp1 <- dat %>%
+  group_by(id) %>%
+  filter(all(is.na(postlaunch_temp))) %>%
+  mutate(original_start_date = NA)
+
+## then create the variable
+dat_temp2 <- dat %>%
+  group_by(id) %>%
+  filter(!all(is.na(postlaunch_temp))) %>%
+  mutate(original_start_date = study_start_date[which.min(postlaunch_temp)])
+
+## bind the two datasets together
+dat <- bind_rows(dat_temp1, dat_temp2)
 
 ## create a variable that represents the first 'completion' date, i.e.
 ## the first date where the trial registry entry that has a status of
@@ -79,20 +69,42 @@ dat2 <- dat %>%
 ## terminology), Recruiting complete, follow-up complete, or Recruiting
 ## stopped after recruiting started (DRKS terminology) - this is the 
 ## original completion date
-dat3 <- dat %>%
-  filter(!(id == c('NCT00111345', 'NCT01601769'))) %>%
-  group_by(id) %>%
-  mutate(original_completion_date = postcompletion_temp[which.min(postcompletion_temp)])
-dat$original_completion_date <- as.Date(dat$original_completion_date, origin="1970-01-01")
 
-## create a last completion date
-# TO DO
+## first, we have to create a temporary dataframe of those trials that have no 
+## 'postcompletion' value, i.e., they apparently are never completed
+dat_temp1 <- dat %>%
+  group_by(id) %>%
+  filter(all(is.na(postcompletion_temp))) %>%
+  mutate(original_completion_date = NA)
+
+## then create the variable
+dat_temp2 <- dat %>%
+  group_by(id) %>%
+  filter(!all(is.na(postcompletion_temp))) %>%
+  mutate(original_completion_date = completion_date[which.min(postcompletion_temp)])
+# old code from Murph (why did he do it like this?):
+#   mutate(original_completion_date = postcompletion_temp[which.min(postcompletion_temp)])
+# dat_temp2$original_completion_date <- as.Date(dat_temp2$original_completion_date, origin="1970-01-01")
+
+## bind the two datasets together
+dat <- bind_rows(dat_temp1, dat_temp2)
 
 ## drop the intermediate variables
 dat <- dat %>%
   select(!c(postlaunch_temp, postcompletion_temp))
 
-## filter for those history versions before study start (i.e., version_date before original_start_date)
+## retrieve the publication dates from the IntoValue dataset
+dat_IV_extended_pb <- read_csv('data/data_IntoValue_extended.csv') %>%
+  select(id, publication_date)
+dat <- dat %>%
+  left_join(dat_IV_extended_pb, by = 'id')
+
+## exclude those history versions before study start (i.e., version_date before original_start_date),
+## but keep those versions with NA as original_start_date
+dat <- dat %>%
+  ungroup() %>%
+  filter(version_date >= original_start_date)
+# what about special cases, like the start date being NA first?
 
 ## determine those versions with changes to their outcomes and mark them as such (logical vector)
 ## Step 1: Identify "run" lengths for outcomes within a trial
@@ -122,6 +134,26 @@ dat <- dat %>%
   ungroup() %>%
   select(!c(temp, outcome_run))
 
+
+
+#### CONTINUE CINTINUE CONTINUE ###
+
+
+
+## see about changes to outcomes at which timepoints
+## (1)
+## first, create logical vectors recruitment_phase (version_date < completion date)
+## completion_phase (version_date >= completion date AND version_date < publication_date)
+## postpublication_phase (version_date >= publication_date)
+## (2)
+## then extract four outcomes
+# ifelse loop
+# if outcome_changed == TRUE and version_date before completion_date
+# create varialbe outcome_changed_precompletion == TRUE
+# else create varialbe outcome_changed_precompletion == FALSE
+# if outcome_changed == TRUE and version_date after completion_date but before publication_date
+# create varialbe outcome_changed_precompletion == TRUE
+
 ## save a version with all historical versions
 # dat %>%
 #   write_csv('data/processed_history_data.csv')
@@ -139,7 +171,9 @@ dat_IV_sample <- read_csv('data/sample_IntoValue.csv') %>%
 #   write_csv('data/export_to_Numbat.csv')
 
 
-#### ---- for a first piloting, save 5 of our IntoValue trials in a separate file ----
+#### ---- PILOT 1 ----
+
+## for a first piloting, save 5 of our IntoValue trials in a separate file
 
 ## create a new sample first
 pilot_sample_1 <- sample(unique(dat_IV_sample$id), 5)
@@ -151,48 +185,3 @@ dat_IV_sample %>%
 dat %>%
   filter(id %in% pilot_sample_1) %>%
   write_csv('data/PILOT_5_HISTORICAL.csv')
-
-
-
-## ---- NEW STRATEGY: run history scraper on all included trials ----
-
-
-## read in the file
-dat_all <- read_csv('data/combined_history_data_all.csv')
-
-## create a 'date of first registration' variable
-dat_all <- dat_all %>%
-  group_by(id) %>%
-  mutate(first_reg_date = min(version_date))
-
-## determine those versions with changes to their outcomes and mark them as such (logical vector)
-## Step 1: Identify "run" lengths for outcomes within a trial
-outcome_runs <- rle(paste(dat_all$id, dat_all$primary_outcomes))
-## Step  2: Make an `outcome_run` column that assigns a number to each
-## "run" of outcomes
-dat_all <- dat_all %>%
-  ungroup() %>%
-  mutate(
-    outcome_run = rep(
-      seq_along(outcome_runs$lengths),
-      outcome_runs$lengths
-    )
-  )
-## Step 3: Create a logical vector that indicates whether an
-## outcome has been changed or not - this is done by grouping
-## by "runs" of outcomes and selecting only the first of each
-dat_all <- dat_all %>%
-  group_by(outcome_run) %>%
-  mutate(temp = min(version_number)) %>%
-  mutate(primary_outcome_changed = ifelse(
-    version_number == temp,
-    TRUE,
-    FALSE
-  )
-  ) %>%
-  ungroup() %>%
-  select(!c(temp, outcome_run))
-
-## save the file
-dat_all %>%
-  write_csv('data/combined_history_data_all.csv')
