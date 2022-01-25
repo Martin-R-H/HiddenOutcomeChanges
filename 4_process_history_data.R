@@ -2,6 +2,9 @@ library(tidyverse)
 
 set.seed(946)
 
+
+## ---- create the 'long' version of the history data ----
+
 ## read in the file
 dat <- read_csv('data/combined_history_data.csv')
 
@@ -104,10 +107,10 @@ dat <- dat %>%
   ungroup() %>%
   mutate(
     trial_phase = case_when(
-      version_date < original_start_date ~ 'pre-recruitment',
+      version_date < original_start_date ~ 'pre_recruitment',
       version_date >= original_start_date & version_date < original_completion_date ~ 'recruitment',
-      version_date >= original_completion_date & version_date < publication_date ~ 'post-completion',
-      version_date >= publication_date ~ 'post-publication',
+      version_date >= original_completion_date & version_date < publication_date ~ 'post_completion',
+      version_date >= publication_date ~ 'post_publication',
       TRUE ~ 'unknown'
     )
   )
@@ -157,7 +160,7 @@ dat <- dat %>%
   group_by(id, trial_phase) %>%
   mutate(
     outcome_changed_prerecruitment = if_else(
-      !all(primary_outcome_changed == FALSE) & trial_phase == 'pre-recruitment', TRUE, FALSE
+      !all(primary_outcome_changed == FALSE) & trial_phase == 'pre_recruitment', TRUE, FALSE
     )
   )
 dat <- dat %>%
@@ -171,14 +174,14 @@ dat <- dat %>%
   group_by(id, trial_phase) %>%
   mutate(
     outcome_changed_postcompletion = if_else(
-      !all(primary_outcome_changed == FALSE) & trial_phase == 'post-completion', TRUE, FALSE
+      !all(primary_outcome_changed == FALSE) & trial_phase == 'post_completion', TRUE, FALSE
     )
   )
 dat <- dat %>%
   group_by(id, trial_phase) %>%
   mutate(
     outcome_changed_postpublication = if_else(
-      !all(primary_outcome_changed == FALSE) & trial_phase == 'post-publication', TRUE, FALSE
+      !all(primary_outcome_changed == FALSE) & trial_phase == 'post_publication', TRUE, FALSE
     )
   )
 
@@ -199,28 +202,81 @@ dat <- dat %>%
 dat %>%
   write_csv('data/processed_history_data_long.csv')
 
+
+## ---- create a 'short' version of the history data ----
+
 ## then extract the outcomes at the four different timepoints
 dat_short <- dat %>%
-  group_by(id) %>%
+  filter(!trial_phase == 'pre_recruitment') %>%
+  group_by(id, trial_phase) %>%
   mutate(
-    outcome_start = primary_outcomes[which.min(version_number) ]
-  )
+    outcome_start = primary_outcomes[which.min(version_number)]
+  ) %>% mutate(
+    outcome_phase_last = primary_outcomes[which.max(version_number)]
+  ) %>%
+  slice_head()
+
+dat_short2 <- dat_short %>%
+  group_by(id) %>%
+  pivot_wider(names_from = trial_phase, values_from = outcome_phase_last) %>%
+    rename(
+      outcome_last_recruitment = recruitment,
+      outcome_last_postcompletion = post_completion,
+      outcome_last_postpublication = post_publication,
+      outcome_last_unknown = unknown
+      ) %>%
+    relocate(outcome_start:outcome_last_unknown, .after = publication_date) %>%
+  relocate(outcome_last_recruitment, .after = outcome_start)
+
+## not perfectly happy with this solution! would rather not slice_head at this stage,
+## but it works -- let's find a better solution later
+# some deprecated code
+# dat_shortx1 <- dat %>%
+#   group_by(id) %>%
+#   mutate(
+#     outcome_start = primary_outcomes[which(min(version_number))]
+#   )
+# dat_shortx2 <- dat %>%
+#   group_by(id) %>%
+#   mutate(
+#     outcome_start = primary_outcomes[which(trial_phase == 'recruitment')]
+#   )
+# xat_xxxx <- dat %>%
+#   filter(id == 'DRKS00000003')
 # & which(trial_phase == 'recruitment')
 
 ## save the 'short' version, in which each line is just one trial,
 ## after combining the data with the IntoValue dataset
-
-# save a short version with slice_head and combine with IntoValue Data
 dat_IV_extended <- read_csv('data/data_IntoValue_extended.csv') %>%
-  select(c(id, registry, title, main_sponsor, study_type, intervention_type, phase, recruitment_status, allocation, start_date, primary_completion_date, doi, pmid, url, publication_date, pub_title, is_publication_2y, is_publication_5y))
-dat_short <- dat_short %>%
+  select(c(id, registry, title, main_sponsor, study_type, intervention_type, phase, recruitment_status, allocation, start_date, primary_completion_date, doi, pmid, url, pub_title, is_publication_2y, is_publication_5y))
+dat_short3 <- dat_short2 %>%
+  group_by(id) %>%
+  slice_head() %>%
   left_join(dat_IV_extended, by = 'id')
 
-dat_short %>%
+dat_short3 %>%
   write_csv('data/processed_history_data_short.csv')
 
-dat_short %>%
-  select() %>% # drop the unnecessary stuff
+dat_short3 %>%
+  select(c(
+    id,
+    total_versions,
+    first_reg_date,
+    final_status,
+    original_start_date,
+    original_completion_date, publication_date.x,
+    outcome_start,
+    outcome_last_recruitment,
+    outcome_last_postcompletion,
+    outcome_last_postpublication,
+    outcome_last_unknown,
+    outcome_changed_recruitment,
+    outcome_changed_postcompletion,
+    outcome_changed_postpublication,
+    doi,
+    url,
+    pub_title
+    )) %>% 
   write_csv('data/processed_history_data_Numbat.csv')
 
 
