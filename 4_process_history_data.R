@@ -99,12 +99,18 @@ dat_IV_extended_pb <- read_csv('data/data_IntoValue_extended.csv') %>%
 dat <- dat %>%
   left_join(dat_IV_extended_pb, by = 'id')
 
-## exclude those history versions before study start (i.e., version_date before original_start_date),
-## but keep those versions with NA as original_start_date
+## create a variable that indicates the point the study is currently at
 dat <- dat %>%
   ungroup() %>%
-  filter(version_date >= original_start_date)
-# what about special cases, like the start date being NA first?
+  mutate(
+    trial_phase = case_when(
+      version_date < original_start_date ~ 'pre-recruitment',
+      version_date >= original_start_date & version_date < original_completion_date ~ 'recruitment',
+      version_date >= original_completion_date & version_date < publication_date ~ 'post-completion',
+      version_date >= publication_date ~ 'post-publication',
+      TRUE ~ 'unknown'
+    )
+  )
 
 ## determine those versions with changes to their outcomes and mark them as such (logical vector)
 ## Step 1: Identify "run" lengths for outcomes within a trial
@@ -134,46 +140,94 @@ dat <- dat %>%
   ungroup() %>%
   select(!c(temp, outcome_run))
 
+## currently, the first history version of each trial reports
+## outcome changes as 'True' - we create a new variable that 
+## corrects this
+dat <- dat %>%
+  mutate(
+    primary_outcome_changed_x = if_else(
+      version_number == 1, FALSE, primary_outcome_changed
+    )
+  ) %>%
+  select(!primary_outcome_changed) %>%
+  rename(primary_outcome_changed = primary_outcome_changed_x)
 
+## create variables that indicate whether outcomes have been changed
+dat <- dat %>%
+  group_by(id, trial_phase) %>%
+  mutate(
+    outcome_changed_prerecruitment = if_else(
+      !all(primary_outcome_changed == FALSE) & trial_phase == 'pre-recruitment', TRUE, FALSE
+    )
+  )
+dat <- dat %>%
+  group_by(id, trial_phase) %>%
+  mutate(
+    outcome_changed_recruitment = if_else(
+      !all(primary_outcome_changed == FALSE) & trial_phase == 'recruitment', TRUE, FALSE
+    )
+  )
+dat <- dat %>%
+  group_by(id, trial_phase) %>%
+  mutate(
+    outcome_changed_postcompletion = if_else(
+      !all(primary_outcome_changed == FALSE) & trial_phase == 'post-completion', TRUE, FALSE
+    )
+  )
+dat <- dat %>%
+  group_by(id, trial_phase) %>%
+  mutate(
+    outcome_changed_postpublication = if_else(
+      !all(primary_outcome_changed == FALSE) & trial_phase == 'post-publication', TRUE, FALSE
+    )
+  )
 
-#### CONTINUE CINTINUE CONTINUE ###
+## these logical vectors just indicate outcome changes in their respective
+## groups - we now make it so that the indicate for all history versions of
+## the same trial id
+dat <- dat %>%
+  ungroup() %>%
+  group_by(id) %>%
+  mutate(
+    outcome_changed_prerecruitment = as.logical(max(outcome_changed_prerecruitment)),
+    outcome_changed_recruitment = as.logical(max(outcome_changed_recruitment)),
+    outcome_changed_postcompletion = as.logical(max(outcome_changed_postcompletion)),
+    outcome_changed_postpublication = as.logical(max(outcome_changed_postpublication))
+  )
 
+## save the long version of the historical data
+dat %>%
+  write_csv('data/processed_history_data_long.csv')
 
+## then extract the outcomes at the four different timepoints
+dat_short <- dat %>%
+  group_by(id) %>%
+  mutate(
+    outcome_start = primary_outcomes[which.min(version_number) ]
+  )
+# & which(trial_phase == 'recruitment')
 
-## see about changes to outcomes at which timepoints
-## (1)
-## first, create logical vectors recruitment_phase (version_date < completion date)
-## completion_phase (version_date >= completion date AND version_date < publication_date)
-## postpublication_phase (version_date >= publication_date)
-## (2)
-## then extract four outcomes
-# ifelse loop
-# if outcome_changed == TRUE and version_date before completion_date
-# create varialbe outcome_changed_precompletion == TRUE
-# else create varialbe outcome_changed_precompletion == FALSE
-# if outcome_changed == TRUE and version_date after completion_date but before publication_date
-# create varialbe outcome_changed_precompletion == TRUE
+## save the 'short' version, in which each line is just one trial,
+## after combining the data with the IntoValue dataset
 
-## save a version with all historical versions
-# dat %>%
-#   write_csv('data/processed_history_data.csv')
-
-## create a dataset with only those versions that have changes to the outcome, and add
-## the IntoValue data
-dat_IV_sample <- read_csv('data/sample_IntoValue.csv') %>%
+# save a short version with slice_head and combine with IntoValue Data
+dat_IV_extended <- read_csv('data/data_IntoValue_extended.csv') %>%
   select(c(id, registry, title, main_sponsor, study_type, intervention_type, phase, recruitment_status, allocation, start_date, primary_completion_date, doi, pmid, url, publication_date, pub_title, is_publication_2y, is_publication_5y))
-# dat_Numbat <- dat %>%
-#   filter(primary_outcome_changed == TRUE) %>%
-#   left_join(dat_IV, by = 'id')
+dat_short <- dat_short %>%
+  left_join(dat_IV_extended, by = 'id')
 
-##  for Numbat, save a file with only those versions that have changes to the outcome
-# dat_Numbat %>%
-#   write_csv('data/export_to_Numbat.csv')
+dat_short %>%
+  write_csv('data/processed_history_data_short.csv')
+
+dat_short %>%
+  select() %>% # drop the unnecessary stuff
+  write_csv('data/processed_history_data_Numbat.csv')
 
 
 #### ---- PILOT 1 ----
 
 ## for a first piloting, save 5 of our IntoValue trials in a separate file
+## (files for pilot first saved on xxxxxxx)
 
 ## create a new sample first
 pilot_sample_1 <- sample(unique(dat_IV_sample$id), 5)
