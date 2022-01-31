@@ -198,7 +198,7 @@ dat <- dat %>%
     outcome_changed_postpublication = as.logical(max(outcome_changed_postpublication))
   )
 
-## save the long version of the historical data
+## save the "long" version of the historical data 
 dat %>%
   write_csv('data/processed_history_data_long.csv')
 
@@ -257,14 +257,19 @@ dat_short3 <- dat_short2 %>%
 dat_short3 %>%
   write_csv('data/processed_history_data_short.csv')
 
+## save the data for import into Numbat to rate the outcome changes (Numbat requires tab-separated values)
 dat_short3 %>%
   select(c(
-    id,
+    pub_title,
+    id,    
+    doi,
+    url,
     total_versions,
     first_reg_date,
     final_status,
     original_start_date,
-    original_completion_date, publication_date.x,
+    original_completion_date, 
+    publication_date,
     outcome_start,
     outcome_last_recruitment,
     outcome_last_postcompletion,
@@ -272,12 +277,9 @@ dat_short3 %>%
     outcome_last_unknown,
     outcome_changed_recruitment,
     outcome_changed_postcompletion,
-    outcome_changed_postpublication,
-    doi,
-    url,
-    pub_title
+    outcome_changed_postpublication
     )) %>% 
-  write_csv('data/processed_history_data_Numbat.csv')
+  write_tsv('data/processed_history_data_Numbat.tsv')
 
 
 #### ---- PILOT 1 ----
