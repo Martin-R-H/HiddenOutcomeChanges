@@ -381,7 +381,8 @@ dat_short %>%
   write_csv('data/processed_history_data_short.csv')
 
 ## save the data for import into Numbat to rate the outcome changes (Numbat requires tab-separated values)
-dat_short %>% 
+## also filter for those trials that have no within-history outcome switches
+dat_Numbat <- dat_short %>% 
   select(
     c(
       id,
@@ -391,6 +392,7 @@ dat_short %>%
       url,
       total_versions,
       first_reg_date,
+      first_status,
       final_status,
       original_start_date,
       original_completion_date, 
@@ -412,6 +414,15 @@ dat_short %>%
       outcome_last_unknown
     )
   ) %>%
+  filter(
+    outcome_changed_recruitment == TRUE |
+    outcome_changed_postcompletion == TRUE |
+    outcome_changed_postpublication == TRUE |
+    outcome_changed_unknown == TRUE
+  )
+
+## save the data
+dat_Numbat %>%
   write_tsv('data/processed_history_data_Numbat.tsv')
 
 
