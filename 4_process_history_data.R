@@ -3,7 +3,7 @@ library(tidyverse)
 set.seed(946)
 
 
-## ---- create the 'long' version of the history data ----
+## ---- 'long' version of the history data ----
 
 ## read in the file
 dat <- read_csv('data/combined_history_data.csv')
@@ -12,6 +12,11 @@ dat <- read_csv('data/combined_history_data.csv')
 dat <- dat %>%
   group_by(id) %>%
   mutate(first_reg_date = min(version_date))
+
+## create a 'first status' variable (it indicates the status the trial has at registration)
+dat <- dat %>%
+  group_by(id) %>%
+  mutate(first_status = status[which.min(version_date)])
 
 ## create a 'final status' variable (since we are looking at published trials, most should be 'completed')
 dat <- dat %>%
@@ -85,9 +90,6 @@ dat_temp2 <- dat %>%
   group_by(id) %>%
   filter(!all(is.na(postcompletion_temp))) %>%
   mutate(original_completion_date = completion_date[which.min(postcompletion_temp)])
-# old code from Murph (why did he do it like this?):
-#   mutate(original_completion_date = postcompletion_temp[which.min(postcompletion_temp)])
-# dat_temp2$original_completion_date <- as.Date(dat_temp2$original_completion_date, origin="1970-01-01")
 
 ## bind the two datasets together
 dat <- bind_rows(dat_temp1, dat_temp2)
@@ -149,43 +151,80 @@ dat <- dat %>%
 dat <- dat %>%
   mutate(
     primary_outcome_changed_x = if_else(
-      version_number == 1, FALSE, primary_outcome_changed
+      version_number == 1,
+      FALSE,
+      primary_outcome_changed
     )
   ) %>%
   select(!primary_outcome_changed) %>%
   rename(primary_outcome_changed = primary_outcome_changed_x)
 
-## create variables that indicate whether outcomes have been changed
+## create boolean vectors that indicate whether a trial actually has
+## each of the phases
 dat <- dat %>%
-  group_by(id, trial_phase) %>%
+  ungroup() %>%
+  group_by(id) %>%
   mutate(
-    outcome_changed_prerecruitment = if_else(
-      !all(primary_outcome_changed == FALSE) & trial_phase == 'pre_recruitment', TRUE, FALSE
-    )
-  )
-dat <- dat %>%
-  group_by(id, trial_phase) %>%
-  mutate(
-    outcome_changed_recruitment = if_else(
-      !all(primary_outcome_changed == FALSE) & trial_phase == 'recruitment', TRUE, FALSE
-    )
-  )
-dat <- dat %>%
-  group_by(id, trial_phase) %>%
-  mutate(
-    outcome_changed_postcompletion = if_else(
-      !all(primary_outcome_changed == FALSE) & trial_phase == 'post_completion', TRUE, FALSE
-    )
-  )
-dat <- dat %>%
-  group_by(id, trial_phase) %>%
-  mutate(
-    outcome_changed_postpublication = if_else(
-      !all(primary_outcome_changed == FALSE) & trial_phase == 'post_publication', TRUE, FALSE
+    has_pre_recruitment_phase = if_else(
+      any(trial_phase == 'pre_recruitment'),
+      TRUE,
+      FALSE
+    ),
+    has_recruitment_phase = if_else(
+      any(trial_phase == 'recruitment'),
+      TRUE,
+      FALSE
+    ),
+    has_post_completion_phase = if_else(
+      any(trial_phase == 'post_completion'),
+      TRUE,
+      FALSE
+    ),
+    has_post_publication_phase = if_else(
+      any(trial_phase == 'post_publication'),
+      TRUE,
+      FALSE
+    ),
+    has_unknown_phase = if_else(
+      any(trial_phase == 'unknown'),
+      TRUE,
+      FALSE
     )
   )
 
-## these logical vectors just indicate outcome changes in their respective
+## create variables that indicate whether outcomes have been changed
+## and that turn into NA if that phase does not exist
+dat <- dat %>%
+  group_by(id, trial_phase) %>%
+  mutate(
+    outcome_changed_prerecruitment = case_when(
+      has_pre_recruitment_phase == FALSE ~ NA,
+      any(primary_outcome_changed == TRUE) & trial_phase == 'pre_recruitment' ~ TRUE,
+      TRUE ~ FALSE
+    ),
+    outcome_changed_recruitment = case_when(
+      has_recruitment_phase == FALSE ~ NA,
+      any(primary_outcome_changed == TRUE) & trial_phase == 'recruitment' ~ TRUE,
+      TRUE ~ FALSE
+    ),
+    outcome_changed_postcompletion = case_when(
+      has_post_completion_phase == FALSE ~ NA,
+      any(primary_outcome_changed == TRUE) & trial_phase == 'post_completion' ~ TRUE,
+      TRUE ~ FALSE
+    ),
+    outcome_changed_postpublication = case_when(
+      has_post_publication_phase == FALSE ~ NA,
+      any(primary_outcome_changed == TRUE) & trial_phase == 'post_publication' ~ TRUE,
+      TRUE ~ FALSE
+    ),
+    outcome_changed_unknown = case_when(
+      has_unknown_phase == FALSE ~ NA,
+      any(primary_outcome_changed == TRUE) & trial_phase == 'unknown' ~ TRUE,
+      TRUE ~ FALSE
+    )
+  )
+
+## the logical vectors above may just indicate outcome changes in their respective
 ## groups - we now make it so that the indicate for all history versions of
 ## the same trial id
 dat <- dat %>%
@@ -195,90 +234,184 @@ dat <- dat %>%
     outcome_changed_prerecruitment = as.logical(max(outcome_changed_prerecruitment)),
     outcome_changed_recruitment = as.logical(max(outcome_changed_recruitment)),
     outcome_changed_postcompletion = as.logical(max(outcome_changed_postcompletion)),
-    outcome_changed_postpublication = as.logical(max(outcome_changed_postpublication))
+    outcome_changed_postpublication = as.logical(max(outcome_changed_postpublication)),
+    outcome_changed_unknown = as.logical(max(outcome_changed_unknown))
   )
+
+## extract the outcome at the beginning
+dat_temp1 <- dat %>%
+  filter(!trial_phase == 'pre_recruitment') %>%
+  ungroup() %>%
+  group_by(id) %>%
+  mutate(
+    trial_phase_start = trial_phase[which.min(version_number)]
+  ) %>% mutate(
+    outcome_start = primary_outcomes[which.min(version_number)]
+  )
+
+dat_temp2 <- dat %>%
+  filter(trial_phase == 'pre_recruitment') %>%
+  ungroup() %>%
+  group_by(id) %>%
+  mutate(
+    trial_phase_start = NA
+  ) %>%
+    mutate(
+      outcome_start = NA
+  )
+
+dat <- bind_rows(dat_temp1, dat_temp2)
+
+dat <- dat %>%
+  arrange(id, version_number) %>%
+  ungroup() %>%
+  group_by(id) %>%
+  fill(trial_phase_start, outcome_start, .direction = 'downup')
+
+## extract the outcomes at the end of each phase
+dat_temp1 <- dat %>%
+  ungroup() %>%
+  filter(trial_phase == 'recruitment') %>%
+  group_by(id) %>%
+  mutate(
+    outcome_last_recruitment = primary_outcomes[which.max(version_number)]
+  )
+dat_temp2 <- dat %>%
+  ungroup() %>%
+  filter(trial_phase == 'post_completion') %>%
+  group_by(id) %>%
+  mutate(
+    outcome_last_postcompletion = primary_outcomes[which.max(version_number)]
+  )
+dat_temp3 <- dat %>%
+  ungroup() %>%
+  filter(trial_phase == 'post_publication') %>%
+  group_by(id) %>%
+  mutate(
+    outcome_last_postpublication = primary_outcomes[which.max(version_number)]
+  )
+dat_temp4 <- dat %>%
+  ungroup() %>%
+  filter(trial_phase == 'unknown') %>%
+  group_by(id) %>%
+  mutate(
+    outcome_last_unknown = primary_outcomes[which.max(version_number)]
+  )
+dat_temp5 <- dat %>%
+  ungroup() %>%
+  filter(trial_phase == 'pre_recruitment')
+
+dat <- bind_rows(dat_temp1, dat_temp2, dat_temp3, dat_temp4, dat_temp5)
+
+dat <- dat %>%
+  group_by(id) %>%
+  fill(
+    outcome_last_recruitment,
+    outcome_last_postcompletion,
+    outcome_last_postpublication,
+    outcome_last_unknown,
+    .direction = 'downup'
+  ) %>%
+  ungroup() %>%
+  arrange(id, version_number)
 
 ## save the "long" version of the historical data 
 dat %>%
   write_csv('data/processed_history_data_long.csv')
 
 
-## ---- create a 'short' version of the history data ----
-
-## then extract the outcomes at the four different timepoints
-dat_short <- dat %>%
-  filter(!trial_phase == 'pre_recruitment') %>%
-  group_by(id, trial_phase) %>%
-  mutate(
-    outcome_start = primary_outcomes[which.min(version_number)]
-  ) %>% mutate(
-    outcome_phase_last = primary_outcomes[which.max(version_number)]
-  ) %>%
-  slice_head()
-
-dat_short2 <- dat_short %>%
-  group_by(id) %>%
-  pivot_wider(names_from = trial_phase, values_from = outcome_phase_last) %>%
-    rename(
-      outcome_last_recruitment = recruitment,
-      outcome_last_postcompletion = post_completion,
-      outcome_last_postpublication = post_publication,
-      outcome_last_unknown = unknown
-      ) %>%
-    relocate(outcome_start:outcome_last_unknown, .after = publication_date) %>%
-  relocate(outcome_last_recruitment, .after = outcome_start)
-
-## not perfectly happy with this solution! would rather not slice_head at this stage,
-## but it works -- let's find a better solution later
-# some deprecated code
-# dat_shortx1 <- dat %>%
-#   group_by(id) %>%
-#   mutate(
-#     outcome_start = primary_outcomes[which(min(version_number))]
-#   )
-# dat_shortx2 <- dat %>%
-#   group_by(id) %>%
-#   mutate(
-#     outcome_start = primary_outcomes[which(trial_phase == 'recruitment')]
-#   )
-# xat_xxxx <- dat %>%
-#   filter(id == 'DRKS00000003')
-# & which(trial_phase == 'recruitment')
+## ---- 'short' version of the history data for Numbat ----
 
 ## save the 'short' version, in which each line is just one trial,
 ## after combining the data with the IntoValue dataset
 dat_IV_extended <- read_csv('data/data_IntoValue_extended.csv') %>%
-  select(c(id, registry, title, main_sponsor, study_type, intervention_type, phase, recruitment_status, allocation, start_date, primary_completion_date, doi, pmid, url, pub_title, is_publication_2y, is_publication_5y))
-dat_short3 <- dat_short2 %>%
+  select(c(
+    id,
+    registry,
+    title,
+    main_sponsor,
+    study_type,
+    intervention_type,
+    phase,
+    recruitment_status,
+    allocation,
+    start_date,
+    primary_completion_date,
+    doi,
+    pmid,
+    url,
+    pub_title,
+    is_publication_2y,
+    is_publication_5y)
+  )
+dat_short <- dat %>%
+  ungroup() %>%
   group_by(id) %>%
   slice_head() %>%
-  left_join(dat_IV_extended, by = 'id')
-
-dat_short3 %>%
-  write_csv('data/processed_history_data_short.csv')
-
-## save the data for import into Numbat to rate the outcome changes (Numbat requires tab-separated values)
-dat_short3 %>%
   select(c(
-    pub_title,
-    id,    
-    doi,
-    url,
+    id,
     total_versions,
     first_reg_date,
+    first_status,
     final_status,
     original_start_date,
     original_completion_date, 
     publication_date,
+    has_pre_recruitment_phase,
+    has_recruitment_phase,
+    has_post_completion_phase,
+    has_post_publication_phase,
+    has_unknown_phase,
+    outcome_changed_recruitment,
+    outcome_changed_postcompletion,
+    outcome_changed_postpublication,
+    outcome_changed_unknown,
+    trial_phase_start,
     outcome_start,
     outcome_last_recruitment,
     outcome_last_postcompletion,
     outcome_last_postpublication,
-    outcome_last_unknown,
-    outcome_changed_recruitment,
-    outcome_changed_postcompletion,
-    outcome_changed_postpublication
-    )) %>% 
+    outcome_last_unknown
+  )) %>%
+  left_join(dat_IV_extended, by = 'id') %>%
+  relocate(outcome_start, .after = trial_phase_start)
+
+## save the data
+dat_short %>% 
+  write_csv('data/processed_history_data_short.csv')
+
+## save the data for import into Numbat to rate the outcome changes (Numbat requires tab-separated values)
+dat_short %>% 
+  select(
+    c(
+      id,
+      title,
+      pub_title,
+      doi,
+      url,
+      total_versions,
+      first_reg_date,
+      final_status,
+      original_start_date,
+      original_completion_date, 
+      publication_date,
+      has_pre_recruitment_phase,
+      has_recruitment_phase,
+      has_post_completion_phase,
+      has_post_publication_phase,
+      has_unknown_phase,
+      outcome_changed_recruitment,
+      outcome_changed_postcompletion,
+      outcome_changed_postpublication,
+      outcome_changed_unknown,
+      trial_phase_start,
+      outcome_start,
+      outcome_last_recruitment,
+      outcome_last_postcompletion,
+      outcome_last_postpublication,
+      outcome_last_unknown
+    )
+  ) %>%
   write_tsv('data/processed_history_data_Numbat.tsv')
 
 
