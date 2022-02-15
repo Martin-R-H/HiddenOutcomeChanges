@@ -3,7 +3,8 @@ library(tidyverse)
 set.seed(946)
 
 
-## ---- 'long' version of the history data ----
+## ---- LONG VERSION ----
+## create a 'long' version of the history data
 
 ## read in the file
 dat <- read_csv('data/combined_history_data.csv')
@@ -150,14 +151,14 @@ dat <- dat %>%
 ## corrects this
 dat <- dat %>%
   mutate(
-    primary_outcome_changed_x = if_else(
+    primary_outcome_changed_temp = if_else(
       version_number == 1,
       FALSE,
       primary_outcome_changed
     )
   ) %>%
   select(!primary_outcome_changed) %>%
-  rename(primary_outcome_changed = primary_outcome_changed_x)
+  rename(primary_outcome_changed = primary_outcome_changed_temp)
 
 ## create boolean vectors that indicate whether a trial actually has
 ## each of the phases
@@ -197,27 +198,27 @@ dat <- dat %>%
 dat <- dat %>%
   group_by(id, trial_phase) %>%
   mutate(
-    outcome_changed_prerecruitment = case_when(
+    p_outcome_changed_prerecruitment = case_when(
       has_pre_recruitment_phase == FALSE ~ NA,
       any(primary_outcome_changed == TRUE) & trial_phase == 'pre_recruitment' ~ TRUE,
       TRUE ~ FALSE
     ),
-    outcome_changed_recruitment = case_when(
+    p_outcome_changed_recruitment = case_when(
       has_recruitment_phase == FALSE ~ NA,
       any(primary_outcome_changed == TRUE) & trial_phase == 'recruitment' ~ TRUE,
       TRUE ~ FALSE
     ),
-    outcome_changed_postcompletion = case_when(
+    p_outcome_changed_postcompletion = case_when(
       has_post_completion_phase == FALSE ~ NA,
       any(primary_outcome_changed == TRUE) & trial_phase == 'post_completion' ~ TRUE,
       TRUE ~ FALSE
     ),
-    outcome_changed_postpublication = case_when(
+    p_outcome_changed_postpublication = case_when(
       has_post_publication_phase == FALSE ~ NA,
       any(primary_outcome_changed == TRUE) & trial_phase == 'post_publication' ~ TRUE,
       TRUE ~ FALSE
     ),
-    outcome_changed_unknown = case_when(
+    p_outcome_changed_unknown = case_when(
       has_unknown_phase == FALSE ~ NA,
       any(primary_outcome_changed == TRUE) & trial_phase == 'unknown' ~ TRUE,
       TRUE ~ FALSE
@@ -231,14 +232,15 @@ dat <- dat %>%
   ungroup() %>%
   group_by(id) %>%
   mutate(
-    outcome_changed_prerecruitment = as.logical(max(outcome_changed_prerecruitment)),
-    outcome_changed_recruitment = as.logical(max(outcome_changed_recruitment)),
-    outcome_changed_postcompletion = as.logical(max(outcome_changed_postcompletion)),
-    outcome_changed_postpublication = as.logical(max(outcome_changed_postpublication)),
-    outcome_changed_unknown = as.logical(max(outcome_changed_unknown))
+    p_outcome_changed_prerecruitment = as.logical(max(p_outcome_changed_prerecruitment)),
+    p_outcome_changed_recruitment = as.logical(max(p_outcome_changed_recruitment)),
+    p_outcome_changed_postcompletion = as.logical(max(p_outcome_changed_postcompletion)),
+    p_outcome_changed_postpublication = as.logical(max(p_outcome_changed_postpublication)),
+    p_outcome_changed_unknown = as.logical(max(p_outcome_changed_unknown))
   )
 
-## extract the outcome at the beginning
+## ---- LONG VERSION: extract primary outcomes for each phase ----
+## extract the primary outcome at the beginning
 dat_temp1 <- dat %>%
   filter(!trial_phase == 'pre_recruitment') %>%
   ungroup() %>%
@@ -246,7 +248,7 @@ dat_temp1 <- dat %>%
   mutate(
     trial_phase_start = trial_phase[which.min(version_number)]
   ) %>% mutate(
-    outcome_start = primary_outcomes[which.min(version_number)]
+    p_outcome_start = primary_outcomes[which.min(version_number)]
   )
 
 dat_temp2 <- dat %>%
@@ -257,7 +259,7 @@ dat_temp2 <- dat %>%
     trial_phase_start = NA
   ) %>%
     mutate(
-      outcome_start = NA
+      p_outcome_start = NA
   )
 
 dat <- bind_rows(dat_temp1, dat_temp2)
@@ -266,61 +268,277 @@ dat <- dat %>%
   arrange(id, version_number) %>%
   ungroup() %>%
   group_by(id) %>%
-  fill(trial_phase_start, outcome_start, .direction = 'downup')
+  fill(trial_phase_start, p_outcome_start, .direction = 'downup')
 
-## extract the outcomes at the end of each phase
+## extract the primary outcomes at the end of each phase
 dat_temp1 <- dat %>%
   ungroup() %>%
   filter(trial_phase == 'recruitment') %>%
   group_by(id) %>%
   mutate(
-    outcome_last_recruitment = primary_outcomes[which.max(version_number)]
+    p_outcome_last_recruitment_temp = primary_outcomes[which.max(version_number)]
+  ) %>%
+  mutate(
+    p_outcome_last_recruitment = if_else(
+      is.na(p_outcome_last_recruitment_temp),
+      'No outcome specified; field was empty in the registry.',
+      p_outcome_last_recruitment_temp
+    )
   )
 dat_temp2 <- dat %>%
   ungroup() %>%
   filter(trial_phase == 'post_completion') %>%
   group_by(id) %>%
   mutate(
-    outcome_last_postcompletion = primary_outcomes[which.max(version_number)]
+    p_outcome_last_postcompletion_temp = primary_outcomes[which.max(version_number)]
+  ) %>%
+  mutate(
+    p_outcome_last_postcompletion = if_else(
+      is.na(p_outcome_last_postcompletion_temp),
+      'No outcome specified; field was empty in the registry.',
+      p_outcome_last_postcompletion_temp
+    )
   )
 dat_temp3 <- dat %>%
   ungroup() %>%
   filter(trial_phase == 'post_publication') %>%
   group_by(id) %>%
   mutate(
-    outcome_last_postpublication = primary_outcomes[which.max(version_number)]
+    p_outcome_last_postpublication_temp = primary_outcomes[which.max(version_number)]
+  ) %>%
+  mutate(
+    p_outcome_last_postpublication = if_else(
+      is.na(p_outcome_last_postpublication_temp),
+      'No outcome specified; field was empty in the registry.',
+      p_outcome_last_postpublication_temp
+    )
   )
 dat_temp4 <- dat %>%
   ungroup() %>%
   filter(trial_phase == 'unknown') %>%
   group_by(id) %>%
   mutate(
-    outcome_last_unknown = primary_outcomes[which.max(version_number)]
+    p_outcome_last_unknown_temp = primary_outcomes[which.max(version_number)]
+  ) %>%
+  mutate(
+    p_outcome_last_unknown = if_else(
+      is.na(p_outcome_last_unknown_temp),
+      'No outcome specified; field was empty in the registry.',
+      p_outcome_last_unknown_temp
+    )
   )
 dat_temp5 <- dat %>%
   ungroup() %>%
   filter(trial_phase == 'pre_recruitment')
 
-dat <- bind_rows(dat_temp1, dat_temp2, dat_temp3, dat_temp4, dat_temp5)
+dat <- bind_rows(dat_temp1, dat_temp2, dat_temp3, dat_temp4, dat_temp5) %>%
+  select(
+    !c(
+      p_outcome_last_recruitment_temp,
+      p_outcome_last_postcompletion_temp,
+      p_outcome_last_postpublication_temp,
+      p_outcome_last_unknown_temp
+    )
+  )
 
 dat <- dat %>%
   group_by(id) %>%
   fill(
-    outcome_last_recruitment,
-    outcome_last_postcompletion,
-    outcome_last_postpublication,
-    outcome_last_unknown,
+    p_outcome_last_recruitment,
+    p_outcome_last_postcompletion,
+    p_outcome_last_postpublication,
+    p_outcome_last_unknown,
     .direction = 'downup'
   ) %>%
   ungroup() %>%
   arrange(id, version_number)
+
+## mutate the respective variables to indicate where a trial phase simply
+## does not exist
+dat <- dat %>%
+  group_by(id) %>%
+  mutate(
+    p_outcome_last_recruitment = if_else(
+      is.na(p_outcome_last_recruitment),
+      'This trial had no recruitment phase according to our definition!',
+      p_outcome_last_recruitment
+    )
+  ) %>%
+  mutate(
+    p_outcome_last_postcompletion = if_else(
+      is.na(p_outcome_last_postcompletion),
+      'This trial had no post-completion phase according to our definition!',
+      p_outcome_last_postcompletion
+    )
+  ) %>%
+  mutate(
+    p_outcome_last_postpublication = if_else(
+      is.na(p_outcome_last_postpublication),
+      'This trial had no post-publication phase according to our definition!',
+      p_outcome_last_postpublication
+    )
+  ) %>%
+  mutate(
+    p_outcome_last_unknown = if_else(
+      is.na(p_outcome_last_unknown),
+      'This trial had no *unknown* phase according to our definition!',
+      p_outcome_last_unknown
+    )
+  )
+
+
+
+## ---- LONG VERSION: extract secondary outcomes for each phase ----
+## extract the secondary outcome at the beginning
+########################
+dat_temp1 <- dat %>%
+  filter(!trial_phase == 'pre_recruitment') %>%
+  ungroup() %>%
+  group_by(id) %>%
+  mutate(
+    s_outcome_start = secondary_outcomes[which.min(version_number)]
+  )
+
+dat_temp2 <- dat %>%
+  filter(trial_phase == 'pre_recruitment') %>%
+  ungroup() %>%
+  group_by(id) %>%
+  mutate(
+    s_outcome_start = NA
+  )
+
+dat <- bind_rows(dat_temp1, dat_temp2)
+
+dat <- dat %>%
+  arrange(id, version_number) %>%
+  ungroup() %>%
+  group_by(id) %>%
+  fill(s_outcome_start, .direction = 'downup')
+
+## extract the secondary outcomes at the end of each phase
+dat_temp1 <- dat %>%
+  ungroup() %>%
+  filter(trial_phase == 'recruitment') %>%
+  group_by(id) %>%
+  mutate(
+    s_outcome_last_recruitment_temp = secondary_outcomes[which.max(version_number)]
+  ) %>%
+  mutate(
+    s_outcome_last_recruitment = if_else(
+      is.na(s_outcome_last_recruitment_temp),
+      'No outcome specified; field was empty in the registry.',
+      s_outcome_last_recruitment_temp
+    )
+  )
+dat_temp2 <- dat %>%
+  ungroup() %>%
+  filter(trial_phase == 'post_completion') %>%
+  group_by(id) %>%
+  mutate(
+    s_outcome_last_postcompletion_temp = secondary_outcomes[which.max(version_number)]
+  ) %>%
+  mutate(
+    s_outcome_last_postcompletion = if_else(
+      is.na(s_outcome_last_postcompletion_temp),
+      'No outcome specified; field was empty in the registry.',
+      s_outcome_last_postcompletion_temp
+    )
+  )
+dat_temp3 <- dat %>%
+  ungroup() %>%
+  filter(trial_phase == 'post_publication') %>%
+  group_by(id) %>%
+  mutate(
+    s_outcome_last_postpublication_temp = secondary_outcomes[which.max(version_number)]
+  ) %>%
+  mutate(
+    s_outcome_last_postpublication = if_else(
+      is.na(s_outcome_last_postpublication_temp),
+      'No outcome specified; field was empty in the registry.',
+      s_outcome_last_postpublication_temp
+    )
+  )
+dat_temp4 <- dat %>%
+  ungroup() %>%
+  filter(trial_phase == 'unknown') %>%
+  group_by(id) %>%
+  mutate(
+    s_outcome_last_unknown_temp = secondary_outcomes[which.max(version_number)]
+  ) %>%
+  mutate(
+    s_outcome_last_unknown = if_else(
+      is.na(s_outcome_last_unknown_temp),
+      'No outcome specified; field was empty in the registry.',
+      s_outcome_last_unknown_temp
+    )
+  )
+dat_temp5 <- dat %>%
+  ungroup() %>%
+  filter(trial_phase == 'pre_recruitment')
+
+dat <- bind_rows(dat_temp1, dat_temp2, dat_temp3, dat_temp4, dat_temp5) %>%
+  select(
+    !c(
+      s_outcome_last_recruitment_temp,
+      s_outcome_last_postcompletion_temp,
+      s_outcome_last_postpublication_temp,
+      s_outcome_last_unknown_temp
+    )
+  )
+
+dat <- dat %>%
+  group_by(id) %>%
+  fill(
+    s_outcome_last_recruitment,
+    s_outcome_last_postcompletion,
+    s_outcome_last_postpublication,
+    s_outcome_last_unknown,
+    .direction = 'downup'
+  ) %>%
+  ungroup() %>%
+  arrange(id, version_number)
+
+## mutate the respective variables to indicate where a trial phase simply
+## does not exist
+dat <- dat %>%
+  group_by(id) %>%
+  mutate(
+    s_outcome_last_recruitment = if_else(
+      is.na(s_outcome_last_recruitment),
+      'This trial had no recruitment phase according to our definition!',
+      s_outcome_last_recruitment
+    )
+  ) %>%
+  mutate(
+    s_outcome_last_postcompletion = if_else(
+      is.na(s_outcome_last_postcompletion),
+      'This trial had no post-completion phase according to our definition!',
+      s_outcome_last_postcompletion
+    )
+  ) %>%
+  mutate(
+    s_outcome_last_postpublication = if_else(
+      is.na(s_outcome_last_postpublication),
+      'This trial had no post-publication phase according to our definition!',
+      s_outcome_last_postpublication
+    )
+  ) %>%
+  mutate(
+    s_outcome_last_unknown = if_else(
+      is.na(s_outcome_last_unknown),
+      'This trial had no *unknown* phase according to our definition!',
+      s_outcome_last_unknown
+    )
+  )
 
 ## save the "long" version of the historical data 
 dat %>%
   write_csv('data/processed_history_data_long.csv')
 
 
-## ---- 'short' version of the history data for Numbat ----
+
+## ---- SHORT VERSION ----
+## create a 'short' version of the history data for Numbat
 
 ## save the 'short' version, in which each line is just one trial,
 ## after combining the data with the IntoValue dataset
@@ -362,19 +580,24 @@ dat_short <- dat %>%
     has_post_completion_phase,
     has_post_publication_phase,
     has_unknown_phase,
-    outcome_changed_recruitment,
-    outcome_changed_postcompletion,
-    outcome_changed_postpublication,
-    outcome_changed_unknown,
+    p_outcome_changed_recruitment,
+    p_outcome_changed_postcompletion,
+    p_outcome_changed_postpublication,
+    p_outcome_changed_unknown,
     trial_phase_start,
-    outcome_start,
-    outcome_last_recruitment,
-    outcome_last_postcompletion,
-    outcome_last_postpublication,
-    outcome_last_unknown
+    p_outcome_start,
+    p_outcome_last_recruitment,
+    p_outcome_last_postcompletion,
+    p_outcome_last_postpublication,
+    p_outcome_last_unknown,
+    s_outcome_start,
+    s_outcome_last_recruitment,
+    s_outcome_last_postcompletion,
+    s_outcome_last_postpublication,
+    s_outcome_last_unknown
   )) %>%
   left_join(dat_IV_extended, by = 'id') %>%
-  relocate(outcome_start, .after = trial_phase_start)
+  relocate(p_outcome_start, .after = trial_phase_start)
 
 ## save the data
 dat_short %>% 
@@ -402,23 +625,28 @@ dat_Numbat <- dat_short %>%
       has_post_completion_phase,
       has_post_publication_phase,
       has_unknown_phase,
-      outcome_changed_recruitment,
-      outcome_changed_postcompletion,
-      outcome_changed_postpublication,
-      outcome_changed_unknown,
+      p_outcome_changed_recruitment,
+      p_outcome_changed_postcompletion,
+      p_outcome_changed_postpublication,
+      p_outcome_changed_unknown,
       trial_phase_start,
-      outcome_start,
-      outcome_last_recruitment,
-      outcome_last_postcompletion,
-      outcome_last_postpublication,
-      outcome_last_unknown
+      p_outcome_start,
+      p_outcome_last_recruitment,
+      p_outcome_last_postcompletion,
+      p_outcome_last_postpublication,
+      p_outcome_last_unknown,
+      s_outcome_start,
+      s_outcome_last_recruitment,
+      s_outcome_last_postcompletion,
+      s_outcome_last_postpublication,
+      s_outcome_last_unknown
     )
   ) %>%
   filter(
-    outcome_changed_recruitment == TRUE |
-    outcome_changed_postcompletion == TRUE |
-    outcome_changed_postpublication == TRUE |
-    outcome_changed_unknown == TRUE
+    p_outcome_changed_recruitment == TRUE |
+    p_outcome_changed_postcompletion == TRUE |
+    p_outcome_changed_postpublication == TRUE |
+    p_outcome_changed_unknown == TRUE
   )
 
 ## save the data
