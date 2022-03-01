@@ -390,7 +390,6 @@ dat <- dat %>%
 
 ## ---- LONG VERSION: extract secondary outcomes for each phase ----
 ## extract the secondary outcome at the beginning
-########################
 dat_temp1 <- dat %>%
   filter(!trial_phase == 'pre_recruitment') %>%
   ungroup() %>%
@@ -398,7 +397,6 @@ dat_temp1 <- dat %>%
   mutate(
     s_outcome_start = secondary_outcomes[which.min(version_number)]
   )
-
 dat_temp2 <- dat %>%
   filter(trial_phase == 'pre_recruitment') %>%
   ungroup() %>%
@@ -406,7 +404,6 @@ dat_temp2 <- dat %>%
   mutate(
     s_outcome_start = NA
   )
-
 dat <- bind_rows(dat_temp1, dat_temp2)
 
 dat <- dat %>%
@@ -652,20 +649,3 @@ dat_Numbat <- dat_short %>%
 ## save the data
 dat_Numbat %>%
   write_tsv('data/processed_history_data_Numbat.tsv')
-
-
-#### ---- PILOT 1 ----
-
-## for a first piloting, save 5 of our IntoValue trials in a separate file
-## (files for pilot first saved on xxxxxxx)
-
-## create a new sample first
-pilot_sample_1 <- sample(unique(dat_IV_sample$id), 5)
-
-dat_IV_sample %>%
-  filter(id %in% pilot_sample_1) %>%
-  write_csv('data/PILOT_5_IV.csv')
-
-dat %>%
-  filter(id %in% pilot_sample_1) %>%
-  write_csv('data/PILOT_5_HISTORICAL.csv')

@@ -7,12 +7,16 @@ dat_drks <- read_csv('data/historical_versions_DRKS.csv')
 
 ## in a first step, restructure the outcomes data from the ClinicalTrials.gov
 ## sample
+## create an empty dataframe
 dat_ct_outcomes <- tibble(
   primary_outcomes = character(),
   secondary_outcomes = character(),
   other_outcomes = character(),
   primary_outcomes_number = numeric()
   )
+## row by row, turn the outcomes from json format into a dataframe, and
+## split that dataframe into separate tables for primary, secondary, and
+## other outcomes - then store them in separate columns
 for (z in 1:nrow(dat_ct)) {
   if (validate(as.character(dat_ct[z, 'outcome_measures'])) == TRUE) {
     dat_o <- fromJSON(as.character(dat_ct[z, 'outcome_measures']))
@@ -43,7 +47,7 @@ for (z in 1:nrow(dat_ct)) {
 }
 
 ## separately for each dataset (to ease merging them), drop all variables
-## that we do not need and mutate others
+## that we do not need and mutate or rename others
 dat_ct <- dat_ct %>%
   select(!c(
     enrolment,
