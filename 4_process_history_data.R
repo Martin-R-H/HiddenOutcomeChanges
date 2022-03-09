@@ -49,7 +49,6 @@ dat$postlaunch_temp <- ifelse(
   NA
 )
 dat$postcompletion_temp <- ifelse(
-  dat$status == "Active, not recruiting" |
   dat$status == "Completed" |
   dat$status == "Terminated" |
   dat$status == "Recruiting stopped after recruiting started" |
@@ -140,10 +139,9 @@ dat <- dat %>%
 
 ## create a variable that represents the first 'completion' date, i.e.
 ## the first date where the trial registry entry that has a status of
-## Active, not recruiting, Completed, Terminated (ClinicalTrials.gov
-## terminology), Recruiting complete, follow-up complete, or Recruiting
-## stopped after recruiting started (DRKS terminology) - this is the 
-## original completion date
+## Completed, Terminated (ClinicalTrials.gov terminology), Recruiting
+## complete, follow-up complete, or Recruiting stopped after recruiting
+## started (DRKS terminology) - this is the original completion date
 
 ## first, we have to create a temporary dataframe of those trials that have no 
 ## 'postcompletion' value, i.e., they apparently are never completed
@@ -152,7 +150,8 @@ dat_temp1 <- dat %>%
   filter(all(is.na(postcompletion_temp))) %>%
   mutate(original_completion_date = NA)
 
-## then create the variable
+## for the trials that do report a 'postcompletion' value, create another temporary
+## dataframe and create a variable for the 'original' completion date
 dat_temp2 <- dat %>%
   group_by(id) %>%
   filter(!all(is.na(postcompletion_temp))) %>%
@@ -161,15 +160,65 @@ dat_temp2 <- dat %>%
 ## bind the two datasets together
 dat <- bind_rows(dat_temp1, dat_temp2)
 
-####
-
-
-
-####
-
-## drop the intermediate variables
+## original completion date - alternative 1:
+## if our first option to determine the original completion start date fails (for
+## example, because a trial reports no completion date at completion), we take
+## the first reported completion date (even if it is added after the study has been
+## completed)
 dat <- dat %>%
-  select(!c(postlaunch_temp, postcompletion_temp))
+  group_by(id) %>%
+  mutate(
+    original_completion_date_alt1 = if_else(
+      is.na(original_completion_date),
+      first(na.omit(completion_date)),
+      original_completion_date
+    )
+  )
+
+## original completion date - alternative 2:
+## if the first and second options fail (i.e., because a trial reports no completion
+## date at all), we will just take the date at which the trial was set to 'completed'
+dat_temp1 <- dat %>%
+  group_by(id) %>%
+  filter(all(is.na(postcompletion_temp))) %>%
+  mutate(original_completion_date_alt2 = original_completion_date_alt1)
+dat_temp2 <- dat %>%
+  group_by(id) %>%
+  filter(!all(is.na(postcompletion_temp))) %>%
+  mutate(
+    original_completion_date_alt2 = if_else(
+      is.na(original_completion_date_alt1),
+      version_date[which.min(postcompletion_temp)],
+      original_completion_date_alt1
+    )
+  )
+dat <- bind_rows(dat_temp1, dat_temp2)
+
+## also, create a variable that indicates by which way the original completion
+## date was determined
+dat <- dat %>%
+  group_by(id) %>%
+  mutate(
+    original_completion_date_type = case_when(
+      !is.na(original_completion_date) ~ 'completion date at completion or later',
+      (is.na(original_completion_date) & !is.na(original_completion_date_alt1)) == TRUE ~ 'first reported completion date (Alternative 1)',
+      (is.na(original_completion_date_alt1) & !is.na(original_completion_date_alt2)) == TRUE ~ 'date at which trial gets set to completed (Alternative 2)'
+    )
+  )
+
+## and then rename the other variables and drop some, including the
+## intermediate variables from the beginning
+dat <- dat %>%
+  select(
+    !c(
+      original_completion_date,
+      original_completion_date_alt1,
+      recruitment_temp,
+      postlaunch_temp,
+      postcompletion_temp
+    )
+  ) %>%
+  rename(original_completion_date = original_completion_date_alt2)
 
 ## retrieve the publication dates from the IntoValue dataset
 dat_IV_extended_pb <- read_csv('data/data_IntoValue_extended.csv') %>%
