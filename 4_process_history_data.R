@@ -24,7 +24,17 @@ dat <- dat %>%
   group_by(id) %>%
   mutate(final_status = status[which.max(version_date)])
 
+
+## ---- LONG VERSION: determine critical timepoints ----
+
 ## create two temporary variables to determine the critical timepoints
+dat$recruitment_temp <- ifelse(
+  dat$status == "Recruiting" |
+    dat$status == "Enrolling by invitation" |
+    dat$status == "Recruiting ongoing",
+  dat$version_date,
+  NA
+)
 dat$postlaunch_temp <- ifelse(
   dat$status == "Recruiting" |
   dat$status == "Enrolling by invitation" |
@@ -48,8 +58,8 @@ dat$postcompletion_temp <- ifelse(
   NA
 )
 
-## create a variable that represents the first 'launch' date, i.e.
-## the first date where the trial registry entry that has a status of
+## create a variable that represents the first study start date, i.e.,
+## the first start date where the trial registry entry that has a status of
 ## Recruiting, Enrolling by invitation, Active, not recruiting, Completed,
 ## Terminated (ClinicalTrials.gov terminology), Recruiting ongoing, Recruiting
 ## complete, follow-up complete, Recruiting stopped after recruiting started, or
@@ -57,13 +67,14 @@ dat$postcompletion_temp <- ifelse(
 ## the trials were not yet recruiting)
 
 ## first, we have to create a temporary dataframe of those trials that have no 
-## 'postlaunch' value, i.e., they apparently never start recruiting
+## 'postlaunch' value, i.e., they apparently never start recruiting or stay 'unknown'
 dat_temp1 <- dat %>%
   group_by(id) %>%
   filter(all(is.na(postlaunch_temp))) %>%
   mutate(original_start_date = NA)
 
-## then create the variable
+## for the trials that do report a 'postlaunch' variable, create another temporary
+## dataframe and create a variable for the 'original' study start date
 dat_temp2 <- dat %>%
   group_by(id) %>%
   filter(!all(is.na(postlaunch_temp))) %>%
@@ -71,6 +82,61 @@ dat_temp2 <- dat %>%
 
 ## bind the two datasets together
 dat <- bind_rows(dat_temp1, dat_temp2)
+
+## original start date - alternative 1:
+## if our first option to determine the original study start date fails (for
+## example, because a trial reports no study start date at launch), we take
+## the first reported start date (even if it is added after recruitment has started)
+dat <- dat %>%
+  group_by(id) %>%
+  mutate(
+    original_start_date_alt1 = if_else(
+      is.na(original_start_date),
+      first(na.omit(study_start_date)),
+      original_start_date
+    )
+  )
+
+## original start date - alternative 2:
+## if the first and second options fail (i.e., because a trial reports no study start
+## date at all), we will just take the date at which the trial was set to 'recruiting'
+dat_temp1 <- dat %>%
+  group_by(id) %>%
+  filter(all(is.na(recruitment_temp))) %>%
+  mutate(original_start_date_alt2 = original_start_date_alt1)
+dat_temp2 <- dat %>%
+  group_by(id) %>%
+  filter(!all(is.na(recruitment_temp))) %>%
+  mutate(
+    original_start_date_alt2 = if_else(
+      is.na(original_start_date_alt1),
+      version_date[which.min(recruitment_temp)],
+      original_start_date_alt1
+    )
+  )
+dat <- bind_rows(dat_temp1, dat_temp2)
+
+## also, create a variable that indicates by which way the original start
+## date was determined
+dat <- dat %>%
+  group_by(id) %>%
+  mutate(
+    original_start_date_type = case_when(
+      !is.na(original_start_date) ~ 'start date at launch or later',
+      (is.na(original_start_date) & !is.na(original_start_date_alt1)) == TRUE ~ 'first reported start date (Alternative 1)',
+      (is.na(original_start_date_alt1) & !is.na(original_start_date_alt2)) == TRUE ~ 'date at which trial gets set to recruiting (Alternative 2)'
+    )
+  )
+
+## and then rename the other variables and drop some
+dat <- dat %>%
+  select(
+    !c(
+      original_start_date,
+      original_start_date_alt1
+    )
+  ) %>%
+  rename(original_start_date = original_start_date_alt2)
 
 ## create a variable that represents the first 'completion' date, i.e.
 ## the first date where the trial registry entry that has a status of
@@ -94,6 +160,12 @@ dat_temp2 <- dat %>%
 
 ## bind the two datasets together
 dat <- bind_rows(dat_temp1, dat_temp2)
+
+####
+
+
+
+####
 
 ## drop the intermediate variables
 dat <- dat %>%
