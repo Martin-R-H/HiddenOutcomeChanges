@@ -335,7 +335,11 @@ dat <- dat %>%
       TRUE ~ FALSE
     ),
     p_outcome_changed_postpublication = case_when(
-      has_post_publication_phase == FALSE ~ NA,
+      has_post_publication_phase == FALSE ~ FALSE,
+      # this is different from the other phases, where we set the value to NA if the trial
+      # does not have that phase - however, if a trial has no 'post-publication' phase, we
+      # can probably safely assume that the outcomes were left untouched after the trial
+      # has been published
       any(primary_outcome_changed == TRUE) & trial_phase == 'post_publication' ~ TRUE,
       TRUE ~ FALSE
     ),
