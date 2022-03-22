@@ -1,10 +1,13 @@
 library(tidyverse)
+# library(devtools)
+# remove.packages('cthist')
+# install_github('bgcarlisle/cthist')
+## this ensures that for this branch, version 1.0 of cthist is downloaded (on 2022-03-21),
+## instead of version 0.1.4 that was used for the first download of the data
 library(cthist)
 
-set.seed(946)
-
 ## download the complete IntoValue 1 and 2 datasets from GitHub
-## (last downloaded on 24 January 2022)
+## (last downloaded on 21 March 2022)
 dat_IV <- read_csv('https://raw.githubusercontent.com/maia-sh/intovalue-data/main/data/processed/trials.csv')
 
 ## apply our predefined inclusion criteria, including removing
@@ -33,7 +36,7 @@ included_ids_DRKS <- included_ids %>%
   as.vector()
 
 ## download the historical versions from ClinicalTrials.gov and DRKS separately
-## (last downloaded 17 Januar 2022, with another check on 24 January 2022)
+## (last downloaded 21 March 2022, as a completely new dataset using cthist version 1.0)
 clinicaltrials_gov_download(included_ids_ct, 'data/historical_versions_ct.csv')
 drks_de_download(included_ids_DRKS, 'data/historical_versions_DRKS.csv')
 
