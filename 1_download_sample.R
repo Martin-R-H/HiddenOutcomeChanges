@@ -6,9 +6,15 @@ library(tidyverse)
 ## instead of version 0.1.4 that was used for the first download of the data
 library(cthist)
 
+set.seed(946)
+
 ## download the complete IntoValue 1 and 2 datasets from GitHub
 ## (last downloaded on 21 March 2022)
 dat_IV <- read_csv('https://raw.githubusercontent.com/maia-sh/intovalue-data/main/data/processed/trials.csv')
+
+dat_2 <- sample_n(dat_IV, 20)
+
+
 
 ## apply our predefined inclusion criteria, including removing
 ## duplicates that are present in both IntoValue versions
@@ -35,9 +41,13 @@ included_ids_DRKS <- included_ids %>%
   unlist() %>%
   as.vector()
 
+# (NEW)
+# shuffle order to get a more random sample
+included_ids_ct2 <- sample(included_ids_ct, 140)
+
 ## download the historical versions from ClinicalTrials.gov and DRKS separately
 ## (last downloaded 21 March 2022, as a completely new dataset using cthist version 1.0)
-clinicaltrials_gov_download(included_ids_ct, 'data/historical_versions_ct.csv')
+clinicaltrials_gov_download(included_ids_ct2, 'data/historical_versions_ct.csv')
 drks_de_download(included_ids_DRKS, 'data/historical_versions_DRKS.csv')
 
 ## save the included IntoValue data, too
