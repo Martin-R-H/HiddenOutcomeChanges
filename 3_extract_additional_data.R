@@ -1,6 +1,7 @@
 library(tidyverse)
 library(RPostgreSQL)
 library(jsonlite)
+library(testthat)
 
 
 ## read in the IntoValue data for our sample
@@ -17,7 +18,16 @@ drv <- dbDriver('PostgreSQL')
 
 ## establish connection to AACT database
 ## (last download: 24 January 2022)
-con <- dbConnect(drv, dbname = 'aact', host = 'aact-db.ctti-clinicaltrials.org', port = 5432, user = 'martinholst', password = 'xawpuk-bufgij-qEghy9')
+## here, the user credentials are taken from the .Renviron file - please
+## save your credentials there first before you can run these lines
+con <- dbConnect(
+  drv,
+  dbname = 'aact',
+  host = 'aact-db.ctti-clinicaltrials.org',
+  port = 5432,
+  user = Sys.getenv('aact_username'),
+  password = Sys.getenv('aact_password'),
+)
 
 dat_aact <- dbGetQuery(con, 'SELECT nct_id, name FROM Conditions')
 dat_aact_MeSH <- dbGetQuery(con, 'SELECT nct_id, mesh_term, mesh_type FROM Browse_Conditions')
@@ -75,8 +85,10 @@ dat_DRKS <- dat_DRKS %>%
   )
   )
 
-## check for duplicates
-nrow(dat_DRKS) == length(unique(dat_DRKS$drksId))
+test_that(
+  'this tests whether there are duplicates',
+  expect_equal(nrow(dat_DRKS), length(unique(dat_DRKS$drksId)))
+)
 
 ## filter for our inclusion criteria and remove duplicates
 dat_DRKS_filtered <- dat_DRKS %>%

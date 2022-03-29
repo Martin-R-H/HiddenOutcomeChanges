@@ -36,12 +36,27 @@ for (z in 1:nrow(dat_ct)) {
       nrow_p_o <- dat_o %>%
         filter(section == 'Primary Outcome Measures:') %>%
         nrow()
-      dat_o <- tibble(primary_outcomes = p_o, secondary_outcomes = s_o, other_outcomes = o_o, primary_outcomes_number = nrow_p_o)
+      dat_o <- tibble(
+        primary_outcomes = p_o,
+        secondary_outcomes = s_o,
+        other_outcomes = o_o,
+        primary_outcomes_number = nrow_p_o
+      )
     } else {
-      dat_o <- tibble(primary_outcomes = as.character(dat_ct[z, 'outcome_measures']), secondary_outcomes = NA, other_outcomes = NA, primary_outcomes_number = 0)
+      dat_o <- tibble(
+        primary_outcomes = as.character(dat_ct[z, 'outcome_measures']),
+        secondary_outcomes = NA,
+        other_outcomes = NA,
+        primary_outcomes_number = 0
+      )
     }
   } else {
-    dat_o <- tibble(primary_outcomes = as.character(dat_ct[z, 'outcome_measures']), secondary_outcomes = NA, other_outcomes = NA, primary_outcomes_number = NA)
+    dat_o <- tibble(
+      primary_outcomes = as.character(dat_ct[z, 'outcome_measures']),
+      secondary_outcomes = NA,
+      other_outcomes = NA,
+      primary_outcomes_number = NA
+    )
   }
   dat_ct_outcomes <- bind_rows(dat_ct_outcomes, dat_o)
 }
@@ -69,7 +84,11 @@ dat_ct <- dat_ct %>%
     completion_date_type = primary_completion_date_type
   )
 dat_drks <- dat_drks %>%
-  mutate(criteria = paste('INCLUSION CRITERIA:', inclusion_criteria, 'EXCLUSION_CRITERIA:', exclusion_criteria)) %>%
+  mutate(
+    criteria = paste(
+      'INCLUSION CRITERIA:', inclusion_criteria, 'EXCLUSION_CRITERIA:', exclusion_criteria
+    )
+  ) %>%
   select(!c(
     enrolment,
     enrolment_type,

@@ -1,7 +1,6 @@
 library(tidyverse)
-library(cthist)
-
-set.seed(946)
+library(cthist) # version used for last download: 0.1.4
+library(testthat)
 
 ## download the complete IntoValue 1 and 2 datasets from GitHub
 ## (last downloaded on 24 January 2022)
@@ -13,9 +12,11 @@ dat_IV_included <- dat_IV %>%
   filter(iv_interventional == TRUE & is_randomized == TRUE & (is_publication_2y == TRUE | is_publication_5y == TRUE)) %>%
   filter(!(is_dupe == TRUE & iv_version == 1)) 
 
-## count the rows
-nrow(dat_IV_included)
-# 1746
+## test the number of rows
+test_that(
+  'Test whether the dataset has the expected number of rows',
+  expect_equal(nrow(dat_IV_included), 1746)
+)
 
 ## for export to the cthist package, select the IDs of all
 ## included trials

@@ -12,22 +12,25 @@ dat <- read_csv('data/combined_history_data.csv')
 ## create a 'date of first registration' variable
 dat <- dat %>%
   group_by(id) %>%
-  mutate(first_reg_date = min(version_date))
+  mutate(first_reg_date = min(version_date)) %>%
+  ungroup()
 
 ## create a 'first status' variable (it indicates the status the trial has at registration)
 dat <- dat %>%
   group_by(id) %>%
-  mutate(first_status = status[which.min(version_date)])
+  mutate(first_status = status[which.min(version_date)]) %>%
+  ungroup()
 
 ## create a 'final status' variable (since we are looking at published trials, most should be 'completed')
 dat <- dat %>%
   group_by(id) %>%
-  mutate(final_status = status[which.max(version_date)])
+  mutate(final_status = status[which.max(version_date)]) %>%
+  ungroup()
 
 
 ## ---- LONG VERSION: determine critical timepoints ----
 
-## create two temporary variables to determine the critical timepoints
+## create three temporary variables to determine the critical timepoints
 dat$recruitment_temp <- ifelse(
   dat$status == "Recruiting" |
     dat$status == "Enrolling by invitation" |
@@ -70,16 +73,22 @@ dat$postcompletion_temp <- ifelse(
 dat_temp1 <- dat %>%
   group_by(id) %>%
   filter(all(is.na(postlaunch_temp))) %>%
-  mutate(original_start_date = NA)
+  mutate(original_start_date = NA) %>%
+  ungroup()
 
 ## for the trials that do report a 'postlaunch' variable, create another temporary
 ## dataframe and create a variable for the 'original' study start date
 dat_temp2 <- dat %>%
   group_by(id) %>%
   filter(!all(is.na(postlaunch_temp))) %>%
-  mutate(original_start_date = study_start_date[which.min(postlaunch_temp)])
+  mutate(original_start_date = study_start_date[which.min(postlaunch_temp)]) %>%
+  ungroup()
 
 ## bind the two datasets together
+test_that(
+  'test that you haven’t lost any rows in the process of splitting the datasets',
+  expect_equal((nrow(dat_temp1) + nrow(dat_temp2)), nrow(dat))
+)
 dat <- bind_rows(dat_temp1, dat_temp2)
 
 ## original start date - alternative 1:
@@ -94,7 +103,8 @@ dat <- dat %>%
       first(na.omit(study_start_date)),
       original_start_date
     )
-  )
+  ) %>%
+  ungroup()
 
 ## original start date - alternative 2:
 ## if the first and second options fail (i.e., because a trial reports no study start
@@ -102,7 +112,8 @@ dat <- dat %>%
 dat_temp1 <- dat %>%
   group_by(id) %>%
   filter(all(is.na(recruitment_temp))) %>%
-  mutate(original_start_date_alt2 = original_start_date_alt1)
+  mutate(original_start_date_alt2 = original_start_date_alt1) %>%
+  ungroup()
 dat_temp2 <- dat %>%
   group_by(id) %>%
   filter(!all(is.na(recruitment_temp))) %>%
@@ -112,7 +123,12 @@ dat_temp2 <- dat %>%
       version_date[which.min(recruitment_temp)],
       original_start_date_alt1
     )
-  )
+  ) %>%
+  ungroup()
+test_that(
+  'test that you haven’t lost any rows in the process of splitting the datasets',
+  expect_equal((nrow(dat_temp1) + nrow(dat_temp2)), nrow(dat))
+)
 dat <- bind_rows(dat_temp1, dat_temp2)
 
 ## also, create a variable that indicates by which way the original start
@@ -125,7 +141,8 @@ dat <- dat %>%
       (is.na(original_start_date) & !is.na(original_start_date_alt1)) == TRUE ~ 'first reported start date (Alternative 1)',
       (is.na(original_start_date_alt1) & !is.na(original_start_date_alt2)) == TRUE ~ 'date at which trial gets set to recruiting (Alternative 2)'
     )
-  )
+  ) %>%
+  ungroup()
 
 ## and then rename the other variables and drop some
 dat <- dat %>%
@@ -136,6 +153,11 @@ dat <- dat %>%
     )
   ) %>%
   rename(original_start_date = original_start_date_alt2)
+
+test_that(
+  'test whether all trials now have a start date',
+  expect_equal(sum(is.na(dat$original_start_date)), 0)
+)
 
 ## create a variable that represents the first 'completion' date, i.e.
 ## the first date where the trial registry entry that has a status of
@@ -148,16 +170,22 @@ dat <- dat %>%
 dat_temp1 <- dat %>%
   group_by(id) %>%
   filter(all(is.na(postcompletion_temp))) %>%
-  mutate(original_completion_date = NA)
+  mutate(original_completion_date = NA) %>%
+  ungroup()
 
 ## for the trials that do report a 'postcompletion' value, create another temporary
 ## dataframe and create a variable for the 'original' completion date
 dat_temp2 <- dat %>%
   group_by(id) %>%
   filter(!all(is.na(postcompletion_temp))) %>%
-  mutate(original_completion_date = completion_date[which.min(postcompletion_temp)])
+  mutate(original_completion_date = completion_date[which.min(postcompletion_temp)]) %>%
+  ungroup()
 
 ## bind the two datasets together
+test_that(
+  'test that you haven’t lost any rows in the process of splitting the datasets',
+  expect_equal((nrow(dat_temp1) + nrow(dat_temp2)), nrow(dat))
+)
 dat <- bind_rows(dat_temp1, dat_temp2)
 
 ## original completion date - alternative 1:
@@ -173,7 +201,8 @@ dat <- dat %>%
       first(na.omit(completion_date)),
       original_completion_date
     )
-  )
+  ) %>%
+  ungroup()
 
 ## original completion date - alternative 2:
 ## if the first and second options fail (i.e., because a trial reports no completion
@@ -181,7 +210,8 @@ dat <- dat %>%
 dat_temp1 <- dat %>%
   group_by(id) %>%
   filter(all(is.na(postcompletion_temp))) %>%
-  mutate(original_completion_date_alt2 = original_completion_date_alt1)
+  mutate(original_completion_date_alt2 = original_completion_date_alt1) %>%
+  ungroup()
 dat_temp2 <- dat %>%
   group_by(id) %>%
   filter(!all(is.na(postcompletion_temp))) %>%
@@ -191,7 +221,12 @@ dat_temp2 <- dat %>%
       version_date[which.min(postcompletion_temp)],
       original_completion_date_alt1
     )
-  )
+  ) %>%
+  ungroup()
+test_that(
+  'test that you haven’t lost any rows in the process of splitting the datasets',
+  expect_equal((nrow(dat_temp1) + nrow(dat_temp2)), nrow(dat))
+)
 dat <- bind_rows(dat_temp1, dat_temp2)
 
 ## also, create a variable that indicates by which way the original completion
@@ -204,7 +239,8 @@ dat <- dat %>%
       (is.na(original_completion_date) & !is.na(original_completion_date_alt1)) == TRUE ~ 'first reported completion date (Alternative 1)',
       (is.na(original_completion_date_alt1) & !is.na(original_completion_date_alt2)) == TRUE ~ 'date at which trial gets set to completed (Alternative 2)'
     )
-  )
+  ) %>%
+  ungroup()
 
 ## and then rename the other variables and drop some, including the
 ## intermediate variables from the beginning
@@ -226,9 +262,16 @@ dat_IV_extended_pb <- read_csv('data/data_IntoValue_extended.csv') %>%
 dat <- dat %>%
   left_join(dat_IV_extended_pb, by = 'id')
 
+test_that(
+  'test whether all trials now have a publication date',
+  expect_equal(sum(is.na(dat$publication_date)), 0)
+)
+# test fails! weird! (there seem to be 6 trials that do not match the left_join)
+# ("NCT01252459" "NCT01055522" "NCT01220856" "NCT00167583" "NCT00711230" "NCT01277406")
+# will be resolved in the next commit
+
 ## create a variable that indicates the point the study is currently at
 dat <- dat %>%
-  ungroup() %>%
   mutate(
     trial_phase = case_when(
       version_date < original_start_date ~ 'pre_recruitment',
@@ -245,7 +288,6 @@ outcome_runs <- rle(paste(dat$id, dat$primary_outcomes))
 ## Step  2: Make an `outcome_run` column that assigns a number to each
 ## "run" of outcomes
 dat <- dat %>%
-  ungroup() %>%
   mutate(
     outcome_run = rep(
       seq_along(outcome_runs$lengths),
@@ -284,7 +326,6 @@ dat <- dat %>%
 ## create boolean vectors that indicate whether a trial actually has
 ## each of the phases
 dat <- dat %>%
-  ungroup() %>%
   group_by(id) %>%
   mutate(
     has_pre_recruitment_phase = if_else(
@@ -312,7 +353,8 @@ dat <- dat %>%
       TRUE,
       FALSE
     )
-  )
+  ) %>%
+  ungroup()
 
 ## create variables that indicate whether outcomes have been changed
 ## and that turn into NA if that phase does not exist
@@ -348,13 +390,13 @@ dat <- dat %>%
       any(primary_outcome_changed == TRUE) & trial_phase == 'unknown' ~ TRUE,
       TRUE ~ FALSE
     )
-  )
+  ) %>%
+  ungroup()
 
 ## the logical vectors above may just indicate outcome changes in their respective
 ## groups - we now make it so that the indicate for all history versions of
 ## the same trial id
 dat <- dat %>%
-  ungroup() %>%
   group_by(id) %>%
   mutate(
     p_outcome_changed_prerecruitment = as.logical(max(p_outcome_changed_prerecruitment)),
@@ -362,42 +404,46 @@ dat <- dat %>%
     p_outcome_changed_postcompletion = as.logical(max(p_outcome_changed_postcompletion)),
     p_outcome_changed_postpublication = as.logical(max(p_outcome_changed_postpublication)),
     p_outcome_changed_unknown = as.logical(max(p_outcome_changed_unknown))
-  )
+  ) %>%
+  ungroup()
 
 ## ---- LONG VERSION: extract primary outcomes for each phase ----
 ## extract the primary outcome at the beginning
 dat_temp1 <- dat %>%
   filter(!trial_phase == 'pre_recruitment') %>%
-  ungroup() %>%
   group_by(id) %>%
   mutate(
     trial_phase_start = trial_phase[which.min(version_number)]
   ) %>% mutate(
     p_outcome_start = primary_outcomes[which.min(version_number)]
-  )
+  ) %>%
+  ungroup()
 
 dat_temp2 <- dat %>%
   filter(trial_phase == 'pre_recruitment') %>%
-  ungroup() %>%
   group_by(id) %>%
   mutate(
     trial_phase_start = NA
   ) %>%
     mutate(
       p_outcome_start = NA
-  )
+  ) %>%
+  ungroup()
 
+test_that(
+  'test that you haven’t lost any rows in the process of splitting the datasets',
+  expect_equal((nrow(dat_temp1) + nrow(dat_temp2)), nrow(dat))
+)
 dat <- bind_rows(dat_temp1, dat_temp2)
 
 dat <- dat %>%
   arrange(id, version_number) %>%
-  ungroup() %>%
   group_by(id) %>%
-  fill(trial_phase_start, p_outcome_start, .direction = 'downup')
+  fill(trial_phase_start, p_outcome_start, .direction = 'downup') %>%
+  ungroup()
 
 ## extract the primary outcomes at the end of each phase
 dat_temp1 <- dat %>%
-  ungroup() %>%
   filter(trial_phase == 'recruitment') %>%
   group_by(id) %>%
   mutate(
@@ -409,9 +455,9 @@ dat_temp1 <- dat %>%
       'No outcome specified; field was empty in the registry.',
       p_outcome_last_recruitment_temp
     )
-  )
+  ) %>%
+  ungroup()
 dat_temp2 <- dat %>%
-  ungroup() %>%
   filter(trial_phase == 'post_completion') %>%
   group_by(id) %>%
   mutate(
@@ -423,9 +469,9 @@ dat_temp2 <- dat %>%
       'No outcome specified; field was empty in the registry.',
       p_outcome_last_postcompletion_temp
     )
-  )
+  ) %>%
+  ungroup()
 dat_temp3 <- dat %>%
-  ungroup() %>%
   filter(trial_phase == 'post_publication') %>%
   group_by(id) %>%
   mutate(
@@ -437,9 +483,9 @@ dat_temp3 <- dat %>%
       'No outcome specified; field was empty in the registry.',
       p_outcome_last_postpublication_temp
     )
-  )
+  ) %>%
+  ungroup()
 dat_temp4 <- dat %>%
-  ungroup() %>%
   filter(trial_phase == 'unknown') %>%
   group_by(id) %>%
   mutate(
@@ -451,11 +497,15 @@ dat_temp4 <- dat %>%
       'No outcome specified; field was empty in the registry.',
       p_outcome_last_unknown_temp
     )
-  )
+  ) %>%
+  ungroup()
 dat_temp5 <- dat %>%
-  ungroup() %>%
   filter(trial_phase == 'pre_recruitment')
 
+test_that(
+  'test that you haven’t lost any rows in the process of splitting the datasets',
+  expect_equal((nrow(dat_temp1) + nrow(dat_temp2) + nrow(dat_temp3) + nrow(dat_temp4) + nrow(dat_temp5)), nrow(dat))
+)
 dat <- bind_rows(dat_temp1, dat_temp2, dat_temp3, dat_temp4, dat_temp5) %>%
   select(
     !c(
@@ -509,7 +559,8 @@ dat <- dat %>%
       'This trial had no *unknown* phase according to our definition!',
       p_outcome_last_unknown
     )
-  )
+  ) %>%
+  ungroup()
 
 
 
@@ -517,29 +568,32 @@ dat <- dat %>%
 ## extract the secondary outcome at the beginning
 dat_temp1 <- dat %>%
   filter(!trial_phase == 'pre_recruitment') %>%
-  ungroup() %>%
   group_by(id) %>%
   mutate(
     s_outcome_start = secondary_outcomes[which.min(version_number)]
-  )
+  ) %>%
+  ungroup()
 dat_temp2 <- dat %>%
   filter(trial_phase == 'pre_recruitment') %>%
-  ungroup() %>%
   group_by(id) %>%
   mutate(
     s_outcome_start = NA
-  )
+  ) %>%
+  ungroup()
+test_that(
+  'test that you haven’t lost any rows in the process of splitting the datasets',
+  expect_equal((nrow(dat_temp1) + nrow(dat_temp2)), nrow(dat))
+)
 dat <- bind_rows(dat_temp1, dat_temp2)
 
 dat <- dat %>%
   arrange(id, version_number) %>%
-  ungroup() %>%
   group_by(id) %>%
-  fill(s_outcome_start, .direction = 'downup')
+  fill(s_outcome_start, .direction = 'downup') %>%
+  ungroup()
 
 ## extract the secondary outcomes at the end of each phase
 dat_temp1 <- dat %>%
-  ungroup() %>%
   filter(trial_phase == 'recruitment') %>%
   group_by(id) %>%
   mutate(
@@ -551,9 +605,9 @@ dat_temp1 <- dat %>%
       'No outcome specified; field was empty in the registry.',
       s_outcome_last_recruitment_temp
     )
-  )
+  ) %>%
+  ungroup()
 dat_temp2 <- dat %>%
-  ungroup() %>%
   filter(trial_phase == 'post_completion') %>%
   group_by(id) %>%
   mutate(
@@ -565,9 +619,9 @@ dat_temp2 <- dat %>%
       'No outcome specified; field was empty in the registry.',
       s_outcome_last_postcompletion_temp
     )
-  )
+  ) %>%
+  ungroup()
 dat_temp3 <- dat %>%
-  ungroup() %>%
   filter(trial_phase == 'post_publication') %>%
   group_by(id) %>%
   mutate(
@@ -579,9 +633,9 @@ dat_temp3 <- dat %>%
       'No outcome specified; field was empty in the registry.',
       s_outcome_last_postpublication_temp
     )
-  )
+  ) %>%
+  ungroup()
 dat_temp4 <- dat %>%
-  ungroup() %>%
   filter(trial_phase == 'unknown') %>%
   group_by(id) %>%
   mutate(
@@ -593,11 +647,15 @@ dat_temp4 <- dat %>%
       'No outcome specified; field was empty in the registry.',
       s_outcome_last_unknown_temp
     )
-  )
+  ) %>%
+  ungroup()
 dat_temp5 <- dat %>%
-  ungroup() %>%
   filter(trial_phase == 'pre_recruitment')
 
+test_that(
+  'test that you haven’t lost any rows in the process of splitting the datasets',
+  expect_equal((nrow(dat_temp1) + nrow(dat_temp2) + nrow(dat_temp3) + nrow(dat_temp4) + nrow(dat_temp5)), nrow(dat))
+)
 dat <- bind_rows(dat_temp1, dat_temp2, dat_temp3, dat_temp4, dat_temp5) %>%
   select(
     !c(
@@ -651,7 +709,8 @@ dat <- dat %>%
       'This trial had no *unknown* phase according to our definition!',
       s_outcome_last_unknown
     )
-  )
+  ) %>%
+  ungroup()
 
 ## save the "long" version of the historical data 
 dat %>%
@@ -685,7 +744,6 @@ dat_IV_extended <- read_csv('data/data_IntoValue_extended.csv') %>%
     is_publication_5y)
   )
 dat_short <- dat %>%
-  ungroup() %>%
   group_by(id) %>%
   slice_head() %>%
   select(c(
