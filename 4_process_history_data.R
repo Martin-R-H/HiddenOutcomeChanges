@@ -1,4 +1,5 @@
 library(tidyverse)
+library(testthat)
 
 set.seed(946)
 
@@ -8,6 +9,7 @@ set.seed(946)
 
 ## read in the file
 dat <- read_csv('data/combined_history_data.csv')
+nrow_beginning <- nrow(dat)
 
 ## create a 'date of first registration' variable
 dat <- dat %>%
@@ -259,16 +261,32 @@ dat <- dat %>%
 ## retrieve the publication dates from the IntoValue dataset
 dat_IV_extended_pb <- read_csv('data/data_IntoValue_extended.csv') %>%
   select(id, publication_date)
+
+## check whether both datasets have the same number of unique IDs
+length(unique(dat_IV_extended_pb$id))
+# 1746, as was expected (see also the script 1_download_sample.R for that)
+length(unique(dat$id))
+# 1752, which is not the expected outcome
+excess_cases <- dat %>%
+  filter(!(id %in% dat_IV_extended_pb$id)) %>%
+  group_by(id) %>%
+  slice_head() %>%
+  select(id) %>%
+  ungroup()
+
+## a check of the original IntoValue dataset (see script 1_download_sample.R)
+## revealed that the 'excess' trials are marked as duplicates, but were still only
+## present in the IntoValue 1 dataset (probably a mistake) - they were just filtered
+## by us, but might have been included in earler commits and remained in the dataset
+## because the cthist scraper appends a table
+## in joining the data, we drop these cases
 dat <- dat %>%
   left_join(dat_IV_extended_pb, by = 'id')
 
 test_that(
-  'test whether all trials now have a publication date',
-  expect_equal(sum(is.na(dat$publication_date)), 0)
+  'test the new dataset has the same number of rows as in the beginning (i.e., nothing was lost)',
+  expect_equal(nrow(dat), nrow_beginning)
 )
-# test fails! weird! (there seem to be 6 trials that do not match the left_join)
-# ("NCT01252459" "NCT01055522" "NCT01220856" "NCT00167583" "NCT00711230" "NCT01277406")
-# will be resolved in the next commit
 
 ## create a variable that indicates the point the study is currently at
 dat <- dat %>%
