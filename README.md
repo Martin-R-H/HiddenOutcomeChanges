@@ -5,7 +5,7 @@ from the first trial registration to the results publication,
 and spin related to primary outcomes in results publications.
 
 We assess publicly available registry information (ClinicalTrials.gov, DRKS), 
-including historical records, of a sample of clinical trials conducted in Germany between 2009 and 2017. 
+including historical records, of a sample of clinical trials conducted in Germany between 2009 and 2017 (https://github.com/maia-sh/intovalue-data). 
 Specifically, we determine the extent to which trials show changes of outcomes in the registry entry 
 (within-registration changes), and between the last registry entry before publication and the respective publication. 
 We assess how changes to the outcome are reported in the respective publication. 
