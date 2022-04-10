@@ -9,7 +9,9 @@ library(testthat)
 dat_short <- read_csv('data/processed_history_data_short.csv')
 
 ## Numbat data intermediate 22-03-29
-dat_Numbat1 <- read_tsv('http://numbat.bgcarlisle.com/fmetrics/export/2022-03-29_023303-form_2-refset_9-final.tsv') %>%
+dat_Numbat1 <- read_tsv(
+  'http://numbat.bgcarlisle.com/fmetrics/export/2022-03-29_023303-form_2-refset_9-final.tsv'
+) %>%
   select(
     c(
       referenceid,
@@ -147,7 +149,6 @@ dat <- dat %>%
       FALSE
     )
   )
-
 dat <- dat %>%
   mutate(
     within_outcome_switch_postcomp= if_else(
@@ -170,7 +171,6 @@ dat <- dat %>%
       FALSE
     )
   )
-
 dat <- dat %>%
   mutate(
     within_outcome_switch_postpub= if_else(
@@ -194,6 +194,18 @@ dat <- dat %>%
     )
   )
 
+## take a look at how many trials point to results at some point
+dat <- dat %>%
+  mutate(
+    points_to_results = if_else(
+      change_a_i_points_to_results == '1' |
+      change_i_p_points_to_results == '1' |
+      change_p_l_points_to_results == '1' ,
+      TRUE,
+      FALSE
+    )
+  )
+
 
 ## let's take a look at some numbers
 sum(dat$within_outcome_switch)
@@ -206,4 +218,22 @@ sum(dat$within_outcome_switch_postcomp)
 sum(dat$within_outcome_switch_postpub)
 # of the 60 trials with changes, 18 have changes in the post-publication phase
 
+## let's see how many trials point to results at some point
+sum(dat$points_to_results)
+# of 154 trials, 81 point to results at some point (about half of them)
+
+# let's include some sanity checks, e.g.
+# (a) if the trial has no recriutment phase, this should be reflected in the Numbat ratings
+test_that(
+  'when has_recruitment_phase = TRUE then change_a_i_no_phase = 1 or NULL and when has_recruitment_phase = FALSE then change_a_i_no_phase = 0 or NULL',
+  expect
+)
+# (b) the same applies to all other phases,
+
+
+# RQ2:
+# Candidate predictors to be used in the exploratory logistic regression analysis include 
+# study phase, industry sponsorship, publication year, medical specialty, registry,
+# multicentre trial. We will carefully justify the selection of variables and give precise
+# definitions before starting our analysis.We will use descriptive statistics where appropriate.
 
