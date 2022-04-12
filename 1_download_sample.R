@@ -34,7 +34,8 @@ included_ids_DRKS <- included_ids %>%
   as.vector()
 
 ## download the historical versions from ClinicalTrials.gov and DRKS separately
-## (last downloaded 17 Januar 2022, with another check on 24 January 2022)
+## (last downloaded 17 January 2022, with another check on 24 January 2022)
+## ClinicalTrials.gov last download 2022-04-12
 clinicaltrials_gov_download(included_ids_ct, 'data/historical_versions_ct.csv')
 drks_de_download(included_ids_DRKS, 'data/historical_versions_DRKS.csv')
 
