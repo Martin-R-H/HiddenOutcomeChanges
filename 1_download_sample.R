@@ -1,15 +1,22 @@
 library(tidyverse)
-library(cthist) # version used for last download: 0.1.4
+# library(devtools)
+# install_github('bgcarlisle/cthist')
+# the latest download (2022-04-12) was done with a development version of cthist
+library(cthist)
 library(testthat)
 
 ## download the complete IntoValue 1 and 2 datasets from GitHub
-## (last downloaded on 24 January 2022)
+## (last downloaded and saved on 24 January 2022)
 dat_IV <- read_csv('https://raw.githubusercontent.com/maia-sh/intovalue-data/main/data/processed/trials.csv')
 
 ## apply our predefined inclusion criteria, including removing
 ## duplicates that are present in both IntoValue versions
 dat_IV_included <- dat_IV %>%
-  filter(iv_interventional == TRUE & is_randomized == TRUE & (is_publication_2y == TRUE | is_publication_5y == TRUE)) %>%
+  filter(
+    iv_interventional == TRUE &
+    is_randomized == TRUE &
+    (is_publication_2y == TRUE | is_publication_5y == TRUE)
+  ) %>%
   filter(!(is_dupe == TRUE & iv_version == 1)) 
 
 ## test the number of rows
@@ -34,10 +41,15 @@ included_ids_DRKS <- included_ids %>%
   as.vector()
 
 ## download the historical versions from ClinicalTrials.gov and DRKS separately
-## (last downloaded 17 January 2022, with another check on 24 January 2022)
-## ClinicalTrials.gov last download 2022-04-12
 clinicaltrials_gov_download(included_ids_ct, 'data/historical_versions_ct.csv')
+# ClinicalTrials.gov data last downloaded 2022-04-12,
+# using most recent development version of cthist
+# (an older version of the file, downloaded on 2022-01-17 and 2022-01-24,
+# has also been saved in the repo under data/historical_versions_ct_2022-01-24
+# for reference and comparison)
 drks_de_download(included_ids_DRKS, 'data/historical_versions_DRKS.csv')
+# DRKS data last downloaded on 2022-01-17 and 2022-01-24,
+# using cthist version 0.1.4
 
 ## save the included IntoValue data, too
 dat_IV_included %>%
