@@ -886,6 +886,7 @@ dat_IV_extended <- read_csv('data/data_IntoValue_extended.csv') %>%
 dat_short <- dat %>%
   group_by(id) %>%
   slice_head() %>%
+  ungroup() %>%
   select(c(
     id,
     total_versions,
@@ -1003,37 +1004,18 @@ dat_Numbat %>%
 ## save the data for import into Numbat to rate the publications for presence
 ## of outcome-switching between registry and publication, as well as reporting
 ## of any changes to outcomes (Numbat requires tab-separated values)
-dat_Numbat_2 <- dat_short %>% 
+dat_Numbat_2 <- dat_short %>%
+  rename(trial_id = id) %>%
   select(
     c(
-      id,
-      registry,
-      title,
-      pub_title,
+      trial_id,
       doi,
       pmid,
       url,
-      publication_type,
-      journal_pubmed,
-      journal_unpaywall,
-      trial_phase_start,
       trial_phase_final,
-      original_start_date,
-      original_start_date_precision,
-      original_start_date_type,
-      original_completion_date,
-      original_completion_date_precision,
-      original_completion_date_type,
-      publication_date,
       latest_version_date,
       results_posted,
       results_posted_date,
-      has_pre_recruitment_phase,
-      has_recruitment_phase,
-      has_post_completion_phase,
-      has_post_publication_phase,
-      has_unknown_phase,
-      p_outcome_start,
       p_outcome_final,
       s_outcome_final
     )
@@ -1043,3 +1025,10 @@ dat_Numbat_2 <- dat_short %>%
 dat_Numbat_2 %>%
   write_tsv('data/processed_history_data_Numbat_2.tsv')
 
+## create and save a sample of the data for the publication checks (for
+## piloting)
+dat_Numbat_2_sample25 <- dat_Numbat_2 %>%
+  sample_n(25)
+
+dat_Numbat_2_sample25 %>%
+  write_tsv('data/processed_history_data_Numbat_2_sample25.tsv')
