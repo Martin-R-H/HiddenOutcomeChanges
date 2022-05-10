@@ -1032,3 +1032,13 @@ dat_Numbat_2_sample25 <- dat_Numbat_2 %>%
 
 dat_Numbat_2_sample25 %>%
   write_tsv('data/processed_history_data_Numbat_2_sample25.tsv')
+
+## create and save a sample of the data for the publication checks (for
+## a first round of non-pilot ratings)
+dat_Numbat_2_sample275 <- dat_Numbat_2 %>%
+  filter(!(trial_id %in% dat_Numbat_2_sample25$trial_id)) %>%
+  sample_n(275)
+
+dat_Numbat_2_sample275 %>%
+  write_tsv('data/processed_history_data_Numbat_2_sample275.tsv')
+
