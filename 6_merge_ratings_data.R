@@ -617,8 +617,8 @@ dat_ratings_pub_25 <- read_tsv(
   # as of 8 Jul 22, this is just 21 observations, as 4 have not yet been reconciled
 )
 dat_ratings_pub_275 <- read_tsv(
-  'http://numbat.bgcarlisle.com/fmetrics/export/2022-07-04_043030-form_3-refset_19-final.tsv'
-  # as of 8 Jul 22, this is just 40 observations, as we still have to reconcile
+  'http://numbat.bgcarlisle.com/fmetrics/export/2022-07-25_034403-form_3-refset_19-final.tsv'
+  # as of 25 Jul 22, this is 181 observations, as we still have to reconcile some
 ) %>% 
   mutate(
     pub_outcome_change_no_change = as.character(pub_outcome_change_no_change),
@@ -667,3 +667,8 @@ dat_merged_full <- dat_merged_full %>%
     has_publication_rating, .before = reviewer_comment
   )
 rm(dat_ratings_pub)
+
+
+## ---- save the analysis file ----
+dat_merged_full %>%
+  write_csv('data/processed_history_data_analyses.csv')
