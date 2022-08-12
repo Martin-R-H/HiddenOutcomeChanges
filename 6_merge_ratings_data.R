@@ -14,7 +14,7 @@ dat <- read_csv('data/processed_history_data_short.csv')
 
 ## read in the dataframe from Numbat
 dat_ratings_wh <- read_tsv(
-  'http://numbat.bgcarlisle.com/fmetrics/export/2022-07-04_043321-form_2-refset_9-final.tsv'
+  'http://numbat.bgcarlisle.com/fmetrics/export/2022-08-12_050654-form_2-refset_9-final.tsv'
 ) %>%
   select(
     c(
@@ -225,7 +225,7 @@ rm(dat, dat_missings,dat_ratings_wh, dat_ratings_wh_UNMATCHED)
 
 ## read in the dataframe from Numbat
 dat_ratings_wh_addendum <- read_tsv(
-  'http://numbat.bgcarlisle.com/fmetrics/export/2022-07-04_043302-form_4-refset_18-final.tsv'
+  'http://numbat.bgcarlisle.com/fmetrics/export/2022-08-12_050830-form_4-refset_18-final.tsv'
 ) %>%
   select(
     trial_id,
@@ -601,8 +601,6 @@ test_that(
   'Are there any trials that are rated as pointing to results now?',
   expect_equal(nrow(test_results), 0)
 )
-# test fails! checks on 9 Jul 22 revealed that we still have some
-# reconciliations missing......
 rm(dat_merged, dat_new_1, dat_new_2, dat_new_3, test_results)
 rm(
   dat_ratings_wh_addendum,
@@ -613,12 +611,10 @@ rm(
 
 ## read in the dataframes from Numbat
 dat_ratings_pub_25 <- read_tsv(
-  'http://numbat.bgcarlisle.com/fmetrics/export/2022-07-04_041040-form_3-refset_16-final.tsv'
-  # as of 8 Jul 22, this is just 21 observations, as 4 have not yet been reconciled
+  'http://numbat.bgcarlisle.com/fmetrics/export/2022-08-12_051025-form_3-refset_16-final.tsv'
 )
 dat_ratings_pub_275 <- read_tsv(
-  'http://numbat.bgcarlisle.com/fmetrics/export/2022-07-25_034403-form_3-refset_19-final.tsv'
-  # as of 25 Jul 22, this is 181 observations, as we still have to reconcile some
+  'http://numbat.bgcarlisle.com/fmetrics/export/2022-08-12_051103-form_3-refset_19-final.tsv'
 ) %>% 
   mutate(
     pub_outcome_change_no_change = as.character(pub_outcome_change_no_change),
