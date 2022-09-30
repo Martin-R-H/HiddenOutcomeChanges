@@ -1,22 +1,11 @@
 library(tidyverse)
 library(lubridate)
+library(binom)
 library(ggupset)
+library(brms)
 library(testthat)
 
 set.seed(638) # I asked Siri to generate a random number between 1 and 1000
-
-
-
-## ---- NOTES ------------------------------------------------------------------
-
-## - We can/should also include some more sanity checks there, like this one:
-##   (a) if the trial has no recriutment phase, this should be reflected in the
-##       Numbat ratings
-##       test_that(
-##        'when has_recruitment_phase = TRUE then change_a_i_no_phase = 1 or NULL and when has_recruitment_phase = FALSE then change_a_i_no_phase = 0 or NULL',
-##        expect
-##      )
-##  (b) the same applies to all other phases,
 
 
 
@@ -35,7 +24,7 @@ dat <- read_csv(
 ## in each of the study phases
 dat <- dat %>%
   mutate(
-    p_o_change_rec = ifelse(
+    p_o_change_rec = case_when(
       (change_a_i_new_primary == '1' |
          change_a_i_primary_from_secondary == '1' |
          change_a_i_change_measurement == '1' |
@@ -48,14 +37,14 @@ dat <- dat %>%
          change_a_i_omitted_aggregation == '1' |
          change_a_i_omitted_timing == '1' |
          change_a_i_primary_to_secondary == '1' |
-         change_a_i_primary_omitted == '1'),
-      TRUE,
-      FALSE
+         change_a_i_primary_omitted == '1') ~
+        TRUE,
+      TRUE ~ FALSE
     )
   )
 dat <- dat %>%
   mutate(
-    p_o_change_postcomp= ifelse(
+    p_o_change_postcomp = case_when(
       (change_i_p_new_primary == '1' |
          change_i_p_primary_from_secondary == '1' |
          change_i_p_change_measurement == '1' |
@@ -68,14 +57,14 @@ dat <- dat %>%
          change_i_p_omitted_aggregation == '1' |
          change_i_p_omitted_timing == '1' |
          change_i_p_primary_to_secondary == '1' |
-         change_i_p_primary_omitted == '1'),
+         change_i_p_primary_omitted == '1') ~
       TRUE,
-      FALSE
+      TRUE ~ FALSE
     )
   )
 dat <- dat %>%
   mutate(
-    p_o_change_postpub= ifelse(
+    p_o_change_postpub= case_when(
       (change_p_l_new_primary == '1' |
          change_p_l_primary_from_secondary == '1' |
          change_p_l_change_measurement == '1' |
@@ -88,14 +77,14 @@ dat <- dat %>%
          change_p_l_omitted_aggregation == '1' |
          change_p_l_omitted_timing == '1' |
          change_p_l_primary_to_secondary == '1' |
-         change_p_l_primary_omitted == '1'),
-      TRUE,
-      FALSE
+         change_p_l_primary_omitted == '1') ~
+        TRUE,
+      TRUE ~ FALSE
     )
   )
 dat <- dat %>%
   mutate(
-    p_o_change_anywithin = ifelse(
+    p_o_change_anywithin = if_else(
       (p_o_change_rec == TRUE |
          p_o_change_postcomp == TRUE |
          p_o_change_postpub == TRUE),
@@ -105,22 +94,24 @@ dat <- dat %>%
   )
 dat <- dat %>%
   mutate(
-    p_o_change_reg_pub = ifelse(
-      (pub_outcome_change_new_primary == '1' |
-         pub_outcome_change_primary_from_secondary == '1' |
-         pub_outcome_change_change_measurement == '1' |
-         pub_outcome_change_change_aggregation == '1' |
-         pub_outcome_change_change_timing == '1' |
-         pub_outcome_change_added_measurement == '1' |
-         pub_outcome_change_added_aggregation == '1' |
-         pub_outcome_change_added_timing == '1' |
-         pub_outcome_change_omitted_measurement == '1' |
-         pub_outcome_change_omitted_aggregation == '1' |
-         pub_outcome_change_omitted_timing == '1' |
-         pub_outcome_change_primary_to_secondary == '1' |
-         pub_outcome_change_primary_omitted == '1'),
-      TRUE,
-      FALSE
+    p_o_change_reg_pub = case_when(
+      has_publication_rating == TRUE &
+        (pub_outcome_change_new_primary == '1' |
+        pub_outcome_change_primary_from_secondary == '1' |
+        pub_outcome_change_change_measurement == '1' |
+        pub_outcome_change_change_aggregation == '1' |
+        pub_outcome_change_change_timing == '1' |
+        pub_outcome_change_added_measurement == '1' |
+        pub_outcome_change_added_aggregation == '1' |
+        pub_outcome_change_added_timing == '1' |
+        pub_outcome_change_omitted_measurement == '1' |
+        pub_outcome_change_omitted_aggregation == '1' |
+        pub_outcome_change_omitted_timing == '1' |
+        pub_outcome_change_primary_to_secondary == '1' |
+        pub_outcome_change_primary_omitted == '1') ~
+        TRUE,
+      has_publication_rating == TRUE ~ FALSE,
+      TRUE ~ NA
     )
   )
 
@@ -129,40 +120,40 @@ dat <- dat %>%
 ## to secondary, or the other way round) in each of the study phases
 dat <- dat %>%
   mutate(
-    p_o_change_severe_rec = ifelse(
+    p_o_change_severe_rec = case_when(
       (change_a_i_new_primary == '1' |
          change_a_i_primary_omitted == '1' |
          change_a_i_primary_from_secondary == '1' |
-         change_a_i_primary_to_secondary == '1'),
-      TRUE,
-      FALSE
-    )
-  )
-dat <- dat %>% 
-  mutate(
-    p_o_change_severe_postcomp = ifelse(
-      (change_i_p_new_primary == '1' |
-         change_i_p_primary_omitted == '1' | 
-         change_i_p_primary_from_secondary == '1' |
-         change_i_p_primary_to_secondary == '1'),
-      TRUE,
-      FALSE
-    )
-  ) 
-dat <- dat %>% 
-  mutate(
-    p_o_change_severe_postpub = ifelse(
-      (change_p_l_new_primary == '1' |
-         change_p_l_primary_omitted == '1' |
-         change_p_l_primary_from_secondary == '1' |
-         change_p_l_primary_to_secondary == '1'),
-      TRUE,
-      FALSE
+         change_a_i_primary_to_secondary == '1') ~
+        TRUE,
+      TRUE ~ FALSE
     )
   )
 dat <- dat %>%
   mutate(
-    p_o_change_severe_anywithin = ifelse(
+    p_o_change_severe_postcomp = case_when(
+      (change_i_p_new_primary == '1' |
+         change_i_p_primary_omitted == '1' |
+         change_i_p_primary_from_secondary == '1' |
+         change_i_p_primary_to_secondary == '1') ~
+        TRUE,
+      TRUE ~ FALSE
+    )
+  )
+dat <- dat %>%
+  mutate(
+    p_o_change_severe_postpub = case_when(
+      (change_p_l_new_primary == '1' |
+         change_p_l_primary_omitted == '1' |
+         change_p_l_primary_from_secondary == '1' |
+         change_p_l_primary_to_secondary == '1') ~
+        TRUE,
+      TRUE ~ FALSE
+    )
+  )
+dat <- dat %>%
+  mutate(
+    p_o_change_severe_anywithin = if_else(
       p_o_change_severe_rec == TRUE |
         p_o_change_severe_postcomp == TRUE |
         p_o_change_severe_postpub == TRUE,
@@ -170,15 +161,17 @@ dat <- dat %>%
       FALSE
     )
   )
-dat <- dat %>% 
+dat <- dat %>%
   mutate(
-    p_o_change_severe_reg_pub = ifelse(
-      (pub_outcome_change_new_primary == '1' |
-         pub_outcome_change_primary_omitted == '1' |
-         pub_outcome_change_primary_from_secondary == '1' |
-         pub_outcome_change_primary_to_secondary == '1'),
-      TRUE,
-      FALSE
+    p_o_change_severe_reg_pub = case_when(
+      has_publication_rating == TRUE &
+        (pub_outcome_change_new_primary == '1' |
+        pub_outcome_change_primary_omitted == '1' |
+        pub_outcome_change_primary_from_secondary == '1' |
+        pub_outcome_change_primary_to_secondary == '1') ~
+        TRUE,
+      has_publication_rating == TRUE ~ FALSE,
+      TRUE ~ NA
     )
   )
 
@@ -189,39 +182,39 @@ dat <- dat %>%
 
 ## 'non-severe' changes: changes to measurement, metric or method of
 ## aggregation, or timing
-dat <- dat %>% 
+dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_c_rec = ifelse(
-      (change_a_i_change_measurement == '1' | 
+    p_o_change_nonsevere_c_rec = case_when(
+      (change_a_i_change_measurement == '1' |
          change_a_i_change_aggregation == '1' |
-         change_a_i_change_timing == '1'),
-      TRUE,
-      FALSE
+         change_a_i_change_timing == '1') ~
+        TRUE,
+      TRUE ~ FALSE
     )
   )
 dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_c_postcomp = ifelse(
+    p_o_change_nonsevere_c_postcomp = case_when(
       (change_i_p_change_measurement == '1' |
          change_i_p_change_aggregation == '1' |
-         change_i_p_change_timing == '1'),
-      TRUE,
-      FALSE
-    )
-  )
-dat <- dat %>% 
-  mutate(
-    p_o_change_nonsevere_c_postpub = ifelse(
-      (change_p_l_change_measurement == '1' |
-         change_p_l_change_aggregation == '1' |
-         change_p_l_change_timing == '1'),
-      TRUE,
-      FALSE
+         change_i_p_change_timing == '1') ~
+        TRUE,
+      TRUE ~ FALSE
     )
   )
 dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_c_anywithin = ifelse(
+    p_o_change_nonsevere_c_postpub = case_when(
+      (change_p_l_change_measurement == '1' |
+         change_p_l_change_aggregation == '1' |
+         change_p_l_change_timing == '1') ~
+        TRUE,
+      TRUE ~ FALSE
+    )
+  )
+dat <- dat %>%
+  mutate(
+    p_o_change_nonsevere_c_anywithin = if_else(
       p_o_change_nonsevere_c_rec == TRUE |
         p_o_change_nonsevere_c_postcomp == TRUE |
         p_o_change_nonsevere_c_postpub == TRUE,
@@ -229,61 +222,63 @@ dat <- dat %>%
       FALSE
     )
   )
-dat <- dat %>% 
+dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_c_reg_pub = ifelse(
-      (pub_outcome_change_change_measurement == '1' |
-         pub_outcome_change_change_aggregation == '1' | 
-         pub_outcome_change_change_timing == '1'),
-      TRUE,
-      FALSE
+    p_o_change_nonsevere_c_reg_pub = case_when(
+      has_publication_rating == TRUE &
+        (pub_outcome_change_change_measurement == '1' |
+        pub_outcome_change_change_aggregation == '1' |
+        pub_outcome_change_change_timing == '1') ~
+        TRUE,
+      has_publication_rating == TRUE ~FALSE,
+      TRUE ~ NA
     )
   )
 
 ## 'non-severe' changes: additions or omissions to measurement, metric or method
 ## of aggregation, or timing
-dat <- dat %>% 
+dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_ao_rec = ifelse(
+    p_o_change_nonsevere_ao_rec = case_when(
       (change_a_i_added_measurement == '1' |
-         change_a_i_added_aggregation == '1'| 
+         change_a_i_added_aggregation == '1'|
          change_a_i_added_timing == '1' |
          change_a_i_omitted_measurement == '1' |
          change_a_i_omitted_aggregation == '1' |
-         change_a_i_omitted_timing == '1'),
-      TRUE,
-      FALSE
+         change_a_i_omitted_timing == '1') ~
+        TRUE,
+      TRUE ~ FALSE
     )
   )
-dat <- dat %>% 
+dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_ao_postcomp = ifelse(
+    p_o_change_nonsevere_ao_postcomp = case_when(
       (change_i_p_added_measurement == '1' |
          change_i_p_added_aggregation == '1'|
          change_i_p_added_timing == '1' |
          change_i_p_omitted_measurement == '1' |
          change_i_p_omitted_aggregation == '1' |
-         change_i_p_omitted_timing == '1'),
-      TRUE,
-      FALSE
-    )
-  )
-dat <- dat %>% 
-  mutate(
-    p_o_change_nonsevere_ao_postpub = ifelse(
-      (change_p_l_added_measurement == '1' |
-         change_p_l_added_aggregation == '1'| 
-         change_p_l_added_timing == '1' |
-         change_p_l_omitted_measurement == '1' |
-         change_p_l_omitted_aggregation == '1' |
-         change_p_l_omitted_timing == '1'),
-      TRUE,
-      FALSE
+         change_i_p_omitted_timing == '1') ~
+        TRUE,
+      TRUE ~ FALSE
     )
   )
 dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_ao_anywithin = ifelse(
+    p_o_change_nonsevere_ao_postpub = case_when(
+      (change_p_l_added_measurement == '1' |
+         change_p_l_added_aggregation == '1'|
+         change_p_l_added_timing == '1' |
+         change_p_l_omitted_measurement == '1' |
+         change_p_l_omitted_aggregation == '1' |
+         change_p_l_omitted_timing == '1') ~
+        TRUE,
+      TRUE ~ FALSE
+    )
+  )
+dat <- dat %>%
+  mutate(
+    p_o_change_nonsevere_ao_anywithin = if_else(
       p_o_change_nonsevere_ao_rec == TRUE |
         p_o_change_nonsevere_ao_postcomp == TRUE |
         p_o_change_nonsevere_ao_postpub == TRUE,
@@ -291,24 +286,26 @@ dat <- dat %>%
       FALSE
     )
   )
-dat <- dat %>% 
+dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_ao_reg_pub = ifelse(
-      (pub_outcome_change_added_measurement == '1' |
-         pub_outcome_change_added_aggregation == '1'|
-         pub_outcome_change_added_timing == '1' |
-         pub_outcome_change_omitted_measurement == '1' |
-         pub_outcome_change_omitted_aggregation == '1' |
-         pub_outcome_change_omitted_timing == '1'),
-      TRUE,
-      FALSE
+    p_o_change_nonsevere_ao_reg_pub = case_when(
+      has_publication_rating == TRUE &
+        (pub_outcome_change_added_measurement == '1' |
+        pub_outcome_change_added_aggregation == '1'|
+        pub_outcome_change_added_timing == '1' |
+        pub_outcome_change_omitted_measurement == '1' |
+        pub_outcome_change_omitted_aggregation == '1' |
+        pub_outcome_change_omitted_timing == '1') ~
+        TRUE,
+      has_publication_rating == TRUE ~ FALSE,
+      TRUE ~ NA
     )
   )
 
 ## 'non-severe' changes: any
 dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_rec = ifelse(
+    p_o_change_nonsevere_rec = if_else(
       p_o_change_nonsevere_c_rec == TRUE | p_o_change_nonsevere_ao_rec == TRUE,
       TRUE,
       FALSE
@@ -316,7 +313,7 @@ dat <- dat %>%
   )
 dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_postcomp = ifelse(
+    p_o_change_nonsevere_postcomp = if_else(
       p_o_change_nonsevere_c_postcomp == TRUE | p_o_change_nonsevere_ao_postcomp == TRUE,
       TRUE,
       FALSE
@@ -324,7 +321,7 @@ dat <- dat %>%
   )
 dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_postpub = ifelse(
+    p_o_change_nonsevere_postpub = if_else(
       p_o_change_nonsevere_c_postpub == TRUE | p_o_change_nonsevere_ao_postpub == TRUE,
       TRUE,
       FALSE
@@ -332,7 +329,7 @@ dat <- dat %>%
   )
 dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_anywithin = ifelse(
+    p_o_change_nonsevere_anywithin = if_else(
       p_o_change_nonsevere_rec == TRUE |
         p_o_change_nonsevere_postcomp == TRUE |
         p_o_change_nonsevere_postpub == TRUE,
@@ -342,10 +339,13 @@ dat <- dat %>%
   )
 dat <- dat %>%
   mutate(
-    p_o_change_nonsevere_reg_pub = ifelse(
-      p_o_change_nonsevere_c_reg_pub == TRUE | p_o_change_nonsevere_ao_reg_pub == TRUE,
-      TRUE,
-      FALSE
+    p_o_change_nonsevere_reg_pub = case_when(
+      has_publication_rating == TRUE &
+        (p_o_change_nonsevere_c_reg_pub == TRUE |
+        p_o_change_nonsevere_ao_reg_pub == TRUE) ~
+        TRUE,
+      has_publication_rating == TRUE ~ FALSE,
+      TRUE ~ NA
     )
   )
 
@@ -355,24 +355,29 @@ dat <- dat %>%
 ## because they did not have the phase, or no change at all)
 dat <- dat %>%
   mutate(
-    no_rec_phase = ifelse(
-      has_recruitment_phase == FALSE | change_a_i_no_phase == '1',
-      TRUE,
-      FALSE
+    no_rec_phase = case_when(
+      has_recruitment_phase == FALSE | change_a_i_no_phase == '1' ~ TRUE,
+      TRUE ~ FALSE
     )
   )
 dat <- dat %>%
   mutate(
-    no_postcomp_phase = ifelse(
-      has_post_completion_phase == FALSE | change_i_p_no_phase == '1',
-      TRUE,
-      FALSE
+    no_postcomp_phase = case_when(
+      has_post_completion_phase == FALSE | change_i_p_no_phase == '1' ~ TRUE,
+      TRUE ~ FALSE
     )
   )
 dat <- dat %>%
   mutate(
-    no_postpub_phase = ifelse(
-      has_post_publication_phase == FALSE | change_p_l_no_phase == '1',
+    no_postpub_phase = case_when(
+      has_post_publication_phase == FALSE | change_p_l_no_phase == '1' ~ TRUE,
+      TRUE ~ FALSE
+    )
+  )
+dat <- dat %>%
+  mutate(
+    no_anywithin_phase = if_else(
+      no_rec_phase == TRUE & no_postcomp_phase == TRUE & no_postpub_phase == TRUE,
       TRUE,
       FALSE
     )
@@ -384,37 +389,34 @@ dat <- dat %>%
 ## because they did not have the phase, or no change at all)
 dat <- dat %>%
   mutate(
-    no_change_rec = ifelse(
-      p_outcome_changed_recruitment == FALSE | change_a_i_no_change == '1',
-      TRUE,
-      FALSE
+    no_change_rec = case_when(
+      p_outcome_changed_recruitment == FALSE | change_a_i_no_change == '1' ~ TRUE,
+      TRUE ~ FALSE
     )
   )
 dat <- dat %>%
   mutate(
-    no_change_postcomp = ifelse(
-      p_outcome_changed_postcompletion == FALSE | change_i_p_no_change == '1',
-      TRUE,
-      FALSE
+    no_change_postcomp = case_when(
+      p_outcome_changed_postcompletion == FALSE | change_i_p_no_change == '1' ~ TRUE,
+      TRUE ~ FALSE
     )
   )
 dat <- dat %>%
   mutate(
-    no_change_postpub = ifelse(
+    no_change_postpub = case_when(
       (has_post_publication_phase == TRUE & p_outcome_changed_postpublication == FALSE) |
-        change_p_l_no_change == '1',
-      # this is a bit of a different definitions - why? because by default, in
-      # script 4, we defined it as "no outcome change" if the post-publication
-      # phase did not exist - but then, the categories were not mutually
-      # exclusive anymore, which is why we make this to make it so again
-      TRUE,
-      FALSE
+        change_p_l_no_change == '1' ~ TRUE,
+        # this is a bit of a different definition. why? because by default, in
+        # script 4, we defined it as "no outcome change" if the post-publication
+        # phase did not exist - but then, the categories were not mutually
+        # exclusive anymore, which is why we make this to make it so again
+      TRUE ~ FALSE
     )
   )
 dat <- dat %>%
   mutate(
-    no_change_anywithin = ifelse(
-      no_change_rec == TRUE | no_change_postcomp == TRUE | no_change_postpub == TRUE,
+    no_change_anywithin = if_else(
+      no_change_rec == TRUE & no_change_postcomp == TRUE & no_change_postpub == TRUE,
       TRUE,
       FALSE
     )
@@ -423,7 +425,7 @@ dat <- dat %>%
   mutate(
     no_change_reg_pub = case_when(
       has_publication_rating == TRUE & pub_outcome_change_no_change == '1' ~ TRUE,
-      has_publication_rating == TRUE & pub_outcome_change_no_change != '1' ~ FALSE, 
+      has_publication_rating == TRUE ~ FALSE,
       TRUE ~ NA
     )
   )
@@ -445,7 +447,7 @@ dat <- dat %>%
   ) %>%
   relocate(phase_recoded, .after = phase)
 
-## recode the year variable
+## recode the year variables
 dat <- dat %>%
   mutate(registration_year = year(first_reg_date)) %>%
   mutate(publication_year = year(publication_date)) %>%
@@ -480,9 +482,6 @@ rm(dat_IV_add)
 ## extract journal fields based on the a copy of the Scimago Journal & Country
 ## Rank database (https://www.scimagojr.com/journalrank.php), which provides
 ## this classification
-## for the classification, see also here:
-## https://service.elsevier.com/app/answers/detail/a_id/15181/supporthub/scopus
-## downloaded on 12 September 2022
 dat_fields <- read_delim('scimagojr 2021.csv', delim = ';') %>%
   rename(medical_field = 'Categories') %>%
   select(
@@ -534,10 +533,12 @@ rm(dat_sample_checks)
 source('functions/recode_fields.R') # to keep the algorithm out of this script
 
 ## recode the medical fields variable into 'General' and 'Specialty'
-dat <- categorisefields_binary(dat)
+dat <- dat %>%
+  categorisefields_binary()
 
 ## recode the medical fields variable into a more fine-grained terminology
-dat <- categorisefields(dat)
+dat <- dat %>%
+  categorisefields()
 
 
 ## ---- RESEARCH QUESTION 1 ----------------------------------------------------
@@ -550,112 +551,147 @@ dat <- categorisefields(dat)
 ## calculate the relevant numbers and proportions
 
 ## any changes in any within-registry phase
-n_any_any <- sum(dat$p_o_change_anywithin, na.rm = TRUE)
-p_any_any <- sum(dat$p_o_change_anywithin, na.rm = TRUE)/nrow(dat)*100
+n_any_any <- sum(dat$p_o_change_anywithin)
+p_any_any <- sum(dat$p_o_change_anywithin)/nrow(dat)*100
 ## severe changes in any phase
-n_severe_any <- sum(dat$p_o_change_severe_anywithin, na.rm = TRUE)
-p_severe_any <- sum(dat$p_o_change_severe_anywithin, na.rm = TRUE)/nrow(dat)*100
+n_severe_any <- sum(dat$p_o_change_severe_anywithin)
+p_severe_any <- sum(dat$p_o_change_severe_anywithin)/nrow(dat)*100
+## non-severe changes in any phase
+n_nonsevere_any <- sum(dat$p_o_change_nonsevere_anywithin)
+p_nonsevere_any <- sum(dat$p_o_change_nonsevere_anywithin)/nrow(dat)*100
 ## non-severe changes (changes) in any phase
-n_nonsevere_c_any <- sum(dat$p_o_change_nonsevere_c_anywithin, na.rm = TRUE)
-p_nonsevere_c_any <- sum(dat$p_o_change_nonsevere_c_anywithin, na.rm = TRUE)/nrow(dat)*100
+n_nonsevere_c_any <- sum(dat$p_o_change_nonsevere_c_anywithin)
+p_nonsevere_c_any <- sum(dat$p_o_change_nonsevere_c_anywithin)/nrow(dat)*100
 ## non-severe changes (additions or omissions) in any phase
-n_nonsevere_ao_any <- sum(dat$p_o_change_nonsevere_ao_anywithin, na.rm = TRUE)
-p_nonsevere_ao_any <- sum(dat$p_o_change_nonsevere_ao_anywithin, na.rm = TRUE)/nrow(dat)*100
+n_nonsevere_ao_any <- sum(dat$p_o_change_nonsevere_ao_anywithin)
+p_nonsevere_ao_any <- sum(dat$p_o_change_nonsevere_ao_anywithin)/nrow(dat)*100
 ## phase does not exist - any phase
-# n_no_phase_any <- sum(dat$no_anywithin_phase, na.rm = TRUE)
-# p_no_phase_any <- sum(dat$no_anywithin_phase, na.rm = TRUE)/nrow(dat)*100
+n_no_phase_any <- sum(dat$no_anywithin_phase)
+p_no_phase_any <- sum(dat$no_anywithin_phase)/nrow(dat)*100
 ## no changes in any phase
-n_no_change_any <- sum(dat$no_change_anywithin, na.rm = TRUE)
-p_no_change_any <- sum(dat$no_change_anywithin, na.rm = TRUE)/nrow(dat)*100
+n_no_change_any <- sum(dat$no_change_anywithin)
+p_no_change_any <- sum(dat$no_change_anywithin)/nrow(dat)*100
 
 ## any changes in recruitment phase
-n_any_rec <- sum(dat$p_o_change_rec, na.rm = TRUE)
-p_any_rec <- sum(dat$p_o_change_rec, na.rm = TRUE)/nrow(dat)*100
+n_any_rec <- sum(dat$p_o_change_rec)
+p_any_rec <- sum(dat$p_o_change_rec)/nrow(dat)*100
 ## severe changes in recruitment phase
-n_severe_rec <- sum(dat$p_o_change_severe_rec, na.rm = TRUE)
-p_severe_rec <- sum(dat$p_o_change_severe_rec, na.rm = TRUE)/nrow(dat)*100
+n_severe_rec <- sum(dat$p_o_change_severe_rec)
+p_severe_rec <- sum(dat$p_o_change_severe_rec)/nrow(dat)*100
+## non-severe changes in recruitment phase
+n_nonsevere_rec <- sum(dat$p_o_change_nonsevere_rec)
+p_nonsevere_rec <- sum(dat$p_o_change_nonsevere_rec)/nrow(dat)*100
 ## non-severe changes (changes) in recruitment phase
-n_nonsevere_c_rec <- sum(dat$p_o_change_nonsevere_c_rec, na.rm = TRUE)
-p_nonsevere_c_rec <- sum(dat$p_o_change_nonsevere_c_rec, na.rm = TRUE)/nrow(dat)*100
+n_nonsevere_c_rec <- sum(dat$p_o_change_nonsevere_c_rec)
+p_nonsevere_c_rec <- sum(dat$p_o_change_nonsevere_c_rec)/nrow(dat)*100
 ## non-severe changes (additions or omissions) in recruitment phase
-n_nonsevere_ao_rec <- sum(dat$p_o_change_nonsevere_ao_rec, na.rm = TRUE)
-p_nonsevere_ao_rec <- sum(dat$p_o_change_nonsevere_ao_rec, na.rm = TRUE)/nrow(dat)*100
+n_nonsevere_ao_rec <- sum(dat$p_o_change_nonsevere_ao_rec)
+p_nonsevere_ao_rec <- sum(dat$p_o_change_nonsevere_ao_rec)/nrow(dat)*100
 ## phase does not exist - recruitment phase
-n_no_phase_rec <- sum(dat$no_rec_phase, na.rm = TRUE)
-p_no_phase_rec <- sum(dat$no_rec_phase, na.rm = TRUE)/nrow(dat)*100
+n_no_phase_rec <- sum(dat$no_rec_phase)
+p_no_phase_rec <- sum(dat$no_rec_phase)/nrow(dat)*100
 ## no changes in recruitment phase
-n_no_change_rec <- sum(dat$no_change_rec, na.rm = TRUE)
-p_no_change_rec <- sum(dat$no_change_rec, na.rm = TRUE)/nrow(dat)*100
+n_no_change_rec <- sum(dat$no_change_rec)
+p_no_change_rec <- sum(dat$no_change_rec)/nrow(dat)*100
 
 ## any changes in post-completion phase
-n_any_postcomp <- sum(dat$p_o_change_postcomp, na.rm = TRUE)
-p_any_postcomp <- sum(dat$p_o_change_postcomp, na.rm = TRUE)/nrow(dat)*100
+n_any_postcomp <- sum(dat$p_o_change_postcomp)
+p_any_postcomp <- sum(dat$p_o_change_postcomp)/nrow(dat)*100
 ## severe changes in post-completion phase
-n_severe_postcomp <- sum(dat$p_o_change_severe_postcomp, na.rm = TRUE)
-p_severe_postcomp <- sum(dat$p_o_change_severe_postcomp, na.rm = TRUE)/nrow(dat)*100
+n_severe_postcomp <- sum(dat$p_o_change_severe_postcomp)
+p_severe_postcomp <- sum(dat$p_o_change_severe_postcomp)/nrow(dat)*100
+## non-severe changes in post-completion phase
+n_nonsevere_postcomp <- sum(dat$p_o_change_nonsevere_postcomp)
+p_nonsevere_postcomp <- sum(dat$p_o_change_nonsevere_postcomp)/nrow(dat)*100
 ## non-severe changes (changes) in post-completion phase
-n_nonsevere_c_postcomp <- sum(dat$p_o_change_nonsevere_c_postcomp, na.rm = TRUE)
-p_nonsevere_c_postcomp <- sum(dat$p_o_change_nonsevere_c_postcomp, na.rm = TRUE)/nrow(dat)*100
+n_nonsevere_c_postcomp <- sum(dat$p_o_change_nonsevere_c_postcomp)
+p_nonsevere_c_postcomp <- sum(dat$p_o_change_nonsevere_c_postcomp)/nrow(dat)*100
 ## non-severe changes (additions or omissions) in post-completion phase
-n_nonsevere_ao_postcomp <- sum(dat$p_o_change_nonsevere_ao_postcomp, na.rm = TRUE)
-p_nonsevere_ao_postcomp <- sum(dat$p_o_change_nonsevere_ao_postcomp, na.rm = TRUE)/nrow(dat)*100
+n_nonsevere_ao_postcomp <- sum(dat$p_o_change_nonsevere_ao_postcomp)
+p_nonsevere_ao_postcomp <- sum(dat$p_o_change_nonsevere_ao_postcomp)/nrow(dat)*100
 ## phase does not exist - post-completion phase
-n_no_phase_postcomp <- sum(dat$no_postcomp_phase, na.rm = TRUE)
-p_no_phase_postcomp <- sum(dat$no_postcomp_phase, na.rm = TRUE)/nrow(dat)*100
+n_no_phase_postcomp <- sum(dat$no_postcomp_phase)
+p_no_phase_postcomp <- sum(dat$no_postcomp_phase)/nrow(dat)*100
 ## no changes in post-completion phase
-n_no_change_postcomp <- sum(dat$no_change_postcomp, na.rm = TRUE)
-p_no_change_postcomp <- sum(dat$no_change_postcomp, na.rm = TRUE)/nrow(dat)*100
+n_no_change_postcomp <- sum(dat$no_change_postcomp)
+p_no_change_postcomp <- sum(dat$no_change_postcomp)/nrow(dat)*100
 
 ## any changes in post-publication phase
-n_any_postpub <- sum(dat$p_o_change_postpub, na.rm = TRUE)
-p_any_postpub <- sum(dat$p_o_change_postpub, na.rm = TRUE)/nrow(dat)*100
+n_any_postpub <- sum(dat$p_o_change_postpub)
+p_any_postpub <- sum(dat$p_o_change_postpub)/nrow(dat)*100
 ## severe changes in post-publication phase
-n_severe_postpub <- sum(dat$p_o_change_severe_postpub, na.rm = TRUE)
-p_severe_postpub <- sum(dat$p_o_change_severe_postpub, na.rm = TRUE)/nrow(dat)*100
+n_severe_postpub <- sum(dat$p_o_change_severe_postpub)
+p_severe_postpub <- sum(dat$p_o_change_severe_postpub)/nrow(dat)*100
+## non-severe changes in post-publication phase
+n_nonsevere_postpub <- sum(dat$p_o_change_nonsevere_postpub)
+p_nonsevere_postpub <- sum(dat$p_o_change_nonsevere_postpub)/nrow(dat)*100
 ## non-severe changes (changes) in post-publication phase
-n_nonsevere_c_postpub <- sum(dat$p_o_change_nonsevere_c_postpub, na.rm = TRUE)
-p_nonsevere_c_postpub <- sum(dat$p_o_change_nonsevere_c_postpub, na.rm = TRUE)/nrow(dat)*100
+n_nonsevere_c_postpub <- sum(dat$p_o_change_nonsevere_c_postpub)
+p_nonsevere_c_postpub <- sum(dat$p_o_change_nonsevere_c_postpub)/nrow(dat)*100
 ## non-severe changes (additions or omissions) in post-publication phase
-n_nonsevere_ao_postpub <- sum(dat$p_o_change_nonsevere_ao_postpub, na.rm = TRUE)
-p_nonsevere_ao_postpub <- sum(dat$p_o_change_nonsevere_ao_postpub, na.rm = TRUE)/nrow(dat)*100
+n_nonsevere_ao_postpub <- sum(dat$p_o_change_nonsevere_ao_postpub)
+p_nonsevere_ao_postpub <- sum(dat$p_o_change_nonsevere_ao_postpub)/nrow(dat)*100
 ## phase does not exist - post-publication phase
-n_no_phase_postpub <- sum(dat$no_postpub_phase, na.rm = TRUE)
-p_no_phase_postpub <- sum(dat$no_postpub_phase, na.rm = TRUE)/nrow(dat)*100
+n_no_phase_postpub <- sum(dat$no_postpub_phase)
+p_no_phase_postpub <- sum(dat$no_postpub_phase)/nrow(dat)*100
 ## no changes in post-publication phase
-n_no_change_postpub <- sum(dat$no_change_postpub, na.rm = TRUE)
-p_no_change_postpub <- sum(dat$no_change_postpub, na.rm = TRUE)/nrow(dat)*100
+n_no_change_postpub <- sum(dat$no_change_postpub)
+p_no_change_postpub <- sum(dat$no_change_postpub)/nrow(dat)*100
 
+## run some tests
+# test_that(
+#   'In the recruitment phase, do trials with changes, with no changes and where the phase does not exist add up?',
+#   expect_equal(n_any_rec + n_no_phase_rec + n_no_change_rec, nrow(dat))
+# )
+test_that(
+  'In the post-completion phase, do trials with changes, with no changes and where the phase does not exist add up?',
+  expect_equal(n_any_postcomp + n_no_phase_postcomp + n_no_change_postcomp, nrow(dat))
+)
+test_that(
+  'In the post-publication phase, do trials with changes, with no changes and where the phase does not exist add up?',
+  expect_equal(n_any_postpub + n_no_phase_postpub + n_no_change_postpub, nrow(dat))
+)
+## the test fails for the recruitment phase, there is one too many! it is
+## apparently categorised in more than one of the above categories - find it:
+dat_test_rec <- dat %>%
+  filter(
+    (no_change_rec == TRUE & no_rec_phase == TRUE) | (p_o_change_rec == TRUE & no_rec_phase == TRUE) | (no_change_rec == TRUE & p_o_change_rec == TRUE)
+  )
+## the trial has no outcome change during recruitment, but is accidentally rated
+## as such, which is why it is both in the 'any change' and in the 'no change'
+## categories
+rm(dat_test_rec)
 
 
 ## ---- RESEARCH QUESTION 1 (Figure 2) -----------------------------------------
 
-## Figure 2: 
+## Figure 2:
 ## What are the changes that happen within the registry across study phases?
 ## To show this more concisely, we do a stacked bar chart for change types
 ## across time points.
 
 dat_Figure2 <- tribble(
-  
+
   ~phase,             ~type,                  ~percentage,
-  
+
   'recruitment',      'severe change',        p_severe_rec,
   'recruitment',      'non-severe change',    p_nonsevere_c_rec,
   'recruitment',      'non-severe add/omm',   p_nonsevere_ao_rec,
   'recruitment',      'phase does not exist', p_no_phase_rec,
 # 'recruitment',      'no change',            p_no_change_rec,
-  
+
   'post-completion',  'severe change',        p_severe_postcomp,
   'post-completion',  'non-severe change',    p_nonsevere_c_postcomp,
   'post-completion',  'non-severe add/omm',   p_nonsevere_ao_postcomp,
   'post-completion',  'phase does not exist', p_no_phase_postcomp,
 # 'post-completion',  'no change',            p_no_change_postcomp,
-  
+
   'post-publication', 'severe change',        p_severe_postpub,
   'post-publication', 'non-severe change',    p_nonsevere_c_postpub,
   'post-publication', 'non-severe add/omm',   p_nonsevere_ao_postpub,
   'post-publication', 'phase does not exist', p_no_phase_postpub #,
 # 'post-publication', 'no change',            p_no_change_postpub
-  
+
 ) %>%
   mutate(phase = factor(phase)) %>%
   mutate(
@@ -693,7 +729,7 @@ ggsave("Figure2.pdf",
 
 
 
-## ---- RESEARCH QUESTION 2 ----
+## ---- RESEARCH QUESTION 2 ----------------------------------------------------
 
 ## Based on all registry changes in all RCTs in the dataset:
 ## We will assess the association of ‘within-registry’ outcome changes with key
@@ -704,26 +740,69 @@ ggsave("Figure2.pdf",
 ## selection of variables and give precise definitions before starting our
 ## analysis. We will use descriptive statistics where appropriate.
 
-model_RQ2 <- glm(
-  p_o_change_anywithin ~
-    phase_recoded +
-    main_sponsor +
-    publication_year + 
-    registration_year +
-    medical_field_recoded +
-    registry +
-    is_multicentric +
-    enrollment +
-    intervention_type_recoded,
-  family="binomial",
-  data = dat
-)
+## the model will be estimated with a generalised linear model (logistic
+## regression)
+
+# ## bayesian model
+# model_RQ2 <- brm(
+#   as.numeric(p_o_change_anywithin) ~
+#     phase_recoded +
+#     main_sponsor +
+#     publication_year +
+#     registration_year +
+#     # medical_field_recoded +
+#     medical_field_recoded_binary +
+#     registry +
+#     is_multicentric +
+#     enrollment +
+#     intervention_type_recoded,
+#   family="binomial",
+#   data = dat,
+#   cores = getOption('mc.cores', 2),
+#   seed = 227 # I again asked Siri for a number between 1 and 999
+# )
+# summary(model_RQ2)
+# 
+# ## see what priors the model used
+# get_prior(
+#   as.numeric(p_o_change_anywithin) ~
+#     phase_recoded +
+#     main_sponsor +
+#     publication_year +
+#     registration_year +
+#     # medical_field_recoded +
+#     medical_field_recoded_binary +
+#     registry +
+#     is_multicentric +
+#     enrollment +
+#     intervention_type_recoded,
+#   family="binomial",
+#   data = dat
+# )
+# 
+# ## freequentist model
+# model_RQ2_freq <- glm(
+#   p_o_change_anywithin ~
+#     phase_recoded +
+#     main_sponsor +
+#     publication_year +
+#     registration_year +
+#     # medical_field_recoded +
+#     medical_field_recoded_binary +
+#     registry +
+#     is_multicentric +
+#     enrollment +
+#     intervention_type_recoded,
+#   family="binomial",
+#   data = dat
+# )
+# sumary(model_RQ2_freq)
 
 
 
 ## ---- RESEARCH QUESTION 3 ----------------------------------------------------
 
-## Based on publications: 
+## Based on publications:
 ## We will determine the proportion of ‘classical’ outcome switching (i.e., if
 ## the primary outcome reported in the publication deviates from the one
 ## reported in the latest version of the preregistration before publication).
@@ -731,20 +810,23 @@ model_RQ2 <- glm(
 ## calculate the respective proportions
 
 ## any changes between latest registry entry and publication
-n_any_reg_pub <- sum(dat$p_o_change_reg_pub, na.rm = TRUE)
-p_any_reg_pub <- sum(dat$p_o_change_reg_pub, na.rm = TRUE)/sum(dat$has_publication_rating)*100
+n_any_reg_pub <- sum(dat$p_o_change_reg_pub, na.rm = T)
+p_any_reg_pub <- sum(dat$p_o_change_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
 ## severe changes between latest registry entry and publication
-n_severe_reg_pub <- sum(dat$p_o_change_severe_reg_pub, na.rm = TRUE)
-p_severe_reg_pub <- sum(dat$p_o_change_severe_reg_pub, na.rm = TRUE)/sum(dat$has_publication_rating)*100
+n_severe_reg_pub <- sum(dat$p_o_change_severe_reg_pub, na.rm = T)
+p_severe_reg_pub <- sum(dat$p_o_change_severe_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
+## non-severe changes between latest registry entry and publication
+n_nonsevere_reg_pub <- sum(dat$p_o_change_nonsevere_reg_pub, na.rm = T)
+p_nonsevere_reg_pub <- sum(dat$p_o_change_nonsevere_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
 ## non-severe changes (changes) between latest registry entry and publication
-n_nonsevere_c_reg_pub <- sum(dat$p_o_change_nonsevere_c_reg_pub, na.rm = TRUE)
-p_nonsevere_c_reg_pub <- sum(dat$p_o_change_nonsevere_c_reg_pub, na.rm = TRUE)/sum(dat$has_publication_rating)*100
+n_nonsevere_c_reg_pub <- sum(dat$p_o_change_nonsevere_c_reg_pub, na.rm = T)
+p_nonsevere_c_reg_pub <- sum(dat$p_o_change_nonsevere_c_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
 ## non-severe changes (additions or omissions) between latest registry entry and publication
-n_nonsevere_ao_reg_pub <- sum(dat$p_o_change_nonsevere_ao_reg_pub, na.rm = TRUE)
-p_nonsevere_ao_reg_pub <- sum(dat$p_o_change_nonsevere_ao_reg_pub, na.rm = TRUE)/sum(dat$has_publication_rating)*100
+n_nonsevere_ao_reg_pub <- sum(dat$p_o_change_nonsevere_ao_reg_pub, na.rm = T)
+p_nonsevere_ao_reg_pub <- sum(dat$p_o_change_nonsevere_ao_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
 ## no changes between latest registry entry and publication
-n_no_change_reg_pub <- sum(dat$p_o_change_nonsevere_reg_pub, na.rm = TRUE)
-p_no_change_reg_pub <- sum(dat$p_o_change_nonsevere_reg_pub, na.rm = TRUE)/sum(dat$has_publication_rating)*100
+n_no_change_reg_pub <- sum(dat$no_change_reg_pub, na.rm = T)
+p_no_change_reg_pub <- sum(dat$no_change_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
 
 
 
@@ -777,7 +859,7 @@ links <-  dat_pub %>%
   rename(
     "Start Date - Completion Date" = p_o_change_rec,
     "Completion Date - Publication Date" = p_o_change_postcomp,
-    "Publication Date - Latest Entry" = p_o_change_postpub, 
+    "Publication Date - Latest Entry" = p_o_change_postpub,
     "Latest Entry - Paper" = p_o_change_reg_pub
   ) %>%
   pivot_longer(cols = -id, names_to = "link") %>%
@@ -808,17 +890,17 @@ Figure3 <- dat_Figure3 %>%
       'Completion Date - Publication Date',
       'Start Date - Completion Date'
     )
-  ) + 
-  scale_y_continuous(labels = scales::percent, limits = c(0,0.8)) + 
-  theme(panel.background=element_rect(fill = "white", colour = "lightgrey"), 
-        panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"), 
-        panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) + 
+  ) +
+  scale_y_continuous(labels = scales::percent, limits = c(0,0.8)) +
+  theme(panel.background=element_rect(fill = "white", colour = "lightgrey"),
+        panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"),
+        panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) +
   # theme_combmatrix(
   #   combmatrix.panel.point.color.fill = c('#994455', '#997700', '#EECC66', '#CCCCCC')
   # ) +
   # I do not think it is actually possible to assign different colours to different sets
-  ylab("Proportion of trials") + 
-  xlab('Any outcome changes across multiple time points') # + 
+  ylab("Proportion of trials") +
+  xlab('Any outcome changes across multiple time points') # +
 # ggtitle(label = '"Less severe" primary outcome changes', subtitle = 'Sample of 300 registry entries and trial results publications')
 Figure3
 
@@ -835,13 +917,13 @@ links <- dat_pub %>%
     id,
     p_o_change_severe_rec,
     p_o_change_severe_postcomp,
-    p_o_change_severe_postpub, 
+    p_o_change_severe_postpub,
     p_o_change_severe_reg_pub
   ) %>%
   rename(
     "Start - Completion" = p_o_change_severe_rec,
     "Completion - Publication" = p_o_change_severe_postcomp,
-    "Publication - Latest Entry" = p_o_change_severe_postpub, 
+    "Publication - Latest Entry" = p_o_change_severe_postpub,
     "Latest Entry - Paper" = p_o_change_severe_reg_pub
   ) %>%
   pivot_longer(cols = -id, names_to = "link") %>%
@@ -872,12 +954,12 @@ FigureS1 <- dat_FigureS1 %>%
       'Completion - Publication',
       'Start - Completion'
     )
-  ) + 
-  scale_y_continuous(labels = scales::percent, limits = c(0,0.8)) + 
-  theme(panel.background=element_rect(fill = "white", colour = "lightgrey"), 
-        panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"), 
-        panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) + 
-  ylab("Proportion of trials") + 
+  ) +
+  scale_y_continuous(labels = scales::percent, limits = c(0,0.8)) +
+  theme(panel.background=element_rect(fill = "white", colour = "lightgrey"),
+        panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"),
+        panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) +
+  ylab("Proportion of trials") +
   xlab('"Severe" outcome changes across multiple time points') #+
 # ggtitle(label = "'Severe' primary outcome switches", subtitle = 'Sample of 300 registry entries and trial results publications')
 FigureS1
@@ -895,14 +977,14 @@ links <- dat_pub %>%
   select(
     id,
     p_o_change_nonsevere_rec,
-    p_o_change_nonsevere_postcomp, 
+    p_o_change_nonsevere_postcomp,
     p_o_change_nonsevere_postpub,
     p_o_change_nonsevere_reg_pub
   ) %>%
   rename(
     "Start - Completion" = p_o_change_nonsevere_rec,
     "Completion - Publication" = p_o_change_nonsevere_postcomp,
-    "Publication - Latest Entry" = p_o_change_nonsevere_postpub, 
+    "Publication - Latest Entry" = p_o_change_nonsevere_postpub,
     "Latest Entry - Paper" = p_o_change_nonsevere_reg_pub
   ) %>%
   pivot_longer(cols = -id, names_to = "link") %>%
@@ -934,13 +1016,13 @@ FigureS2 <- dat_FigureS2 %>%
       'Completion - Publication',
       'Start - Completion'
     )
-  ) + 
-  scale_y_continuous(labels = scales::percent, limits = c(0,0.8)) + 
-  theme(panel.background=element_rect(fill = "white", colour = "lightgrey"), 
-        panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"), 
-        panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) + 
-  ylab("Proportion of trials") + 
-  xlab('"Less severe" outcome changes across multiple time points') # + 
+  ) +
+  scale_y_continuous(labels = scales::percent, limits = c(0,0.8)) +
+  theme(panel.background=element_rect(fill = "white", colour = "lightgrey"),
+        panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"),
+        panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) +
+  ylab("Proportion of trials") +
+  xlab('"Less severe" outcome changes across multiple time points') # +
 # ggtitle(label = '"Less severe" primary outcome changes', subtitle = 'Sample of 300 registry entries and trial results publications')
 FigureS2
 
@@ -955,7 +1037,7 @@ ggsave("FigureS2.pdf",
 
 ## ---- RESEARCH QUESTION 4 ----------------------------------------------------
 
-## Based on publications: 
+## Based on publications:
 ## We will assess the association of ‘classical’ outcome switching with key
 ## candidate predictors (listed below).
 ## Listed below is: Candidate predictors to be used in the exploratory logistic
@@ -964,31 +1046,93 @@ ggsave("FigureS2.pdf",
 ## justify the selection of variables and give precise definitions before
 ## starting our analysis. We will use descriptive statistics where appropriate.
 
-# wait for respective decisions
-# model_RQ4 <- glm(y ~ x1, 
-#              family = "binomial", 
-#              data = dat_pub)
+# ## bayesian model
+# library(brms)
+# model_RQ4 <- brm(
+#   as.numeric(p_o_change_reg_pub) ~
+#     phase_recoded +
+#     main_sponsor +
+#     publication_year +
+#     registration_year +
+#     # medical_field_recoded +
+#     medical_field_recoded_binary +
+#     registry +
+#     is_multicentric +
+#     enrollment +
+#     intervention_type_recoded,
+#   family="binomial",
+#   data = dat_pub,
+#   cores = getOption('mc.cores', 2),
+#   seed = XYX # I again asked Siri for a number between 1 and 999
+# )
 # summary(model_RQ4)
+# 
+# ## see what priors the model used
+# get_prior(
+#   as.numeric(p_o_change_anywithin) ~
+#     phase_recoded +
+#     main_sponsor +
+#     publication_year +
+#     registration_year +
+#     # medical_field_recoded +
+#     medical_field_recoded_binary +
+#     registry +
+#     is_multicentric +
+#     enrollment +
+#     intervention_type_recoded,
+#   family="binomial",
+#   data = dat_pub
+# )
+# 
+# ## frequentist model
+# model_RQ4_freq <- glm(
+#   p_o_change_reg_pub ~
+#     phase_recoded +
+#     main_sponsor +
+#     publication_year +
+#     registration_year +
+#     # medical_field_recoded +
+#     medical_field_recoded_binary +
+#     registry +
+#     is_multicentric +
+#     enrollment +
+#     intervention_type_recoded,
+#   family="binomial",
+#   data = dat_pub
+# )
+# sumary(model_RQ4_freq)
 
 
 
 ## ---- RESEARCH QUESTION 5 ----------------------------------------------------
 
-## Based on publications: 
+## Based on publications:
 ## We will assess the association between ‘within-registry’ outcome switching
 ## and ‘classical’ outcome switching.
 
-# wait for respective decisions
-# model_RQ5 <- glm(pub_outcome_switch ~ within_outcome_switch, 
-#              family = "binomial", 
-#              data = dat_pub)
-# summary(model_RQ5)
+# ## bayesian model
+model_RQ5 <- brm(
+  as.numeric(p_o_change_reg_pub) ~ p_o_change_anywithin,
+  family = 'binomial',
+  data = dat_pub,
+  cores = getOption('mc.cores', 2),
+  seed = 827 # I again asked Siri for a number between 1 and 999
+)
+summary(model_RQ5)
+
+## frequentist model
+model_RQ5_freq <- glm(
+  p_o_change_reg_pub ~ p_o_change_anywithin,
+  family = 'binomial',
+  data = dat_pub
+)
+summary(model_RQ5_freq)
 
 
 
 ## ---- RESEARCH QUESTION 6 ----------------------------------------------------
 
-## Based on publications: 
+## Based on publications:
 ## We will determine the proportion of trials with transparent reporting of
 ## “within-registry” changes in the publication.
 
@@ -1002,7 +1146,12 @@ dat_pub <- dat_pub %>%
     )
   )
 n_reporting_severe_anywithin <- sum(dat_pub$reporting_severe_anywithin, na.rm = TRUE)
-p_reporting_severe_anywithin <- sum(dat_pub$reporting_severe_anywithin, na.rm = TRUE)/sum(dat_pub$p_o_change_severe_anywithin, na.rm = TRUE)*100
+n_severe_anywithin_sample <- sum(dat_pub$p_o_change_severe_anywithin, na.rm = TRUE)
+p_reporting_severe_anywithin <- n_reporting_severe_anywithin / n_severe_anywithin_sample * 100
+CI_reporting_severe_anywithin <-
+  binom.bayes(n_reporting_severe_anywithin, n_severe_anywithin_sample) # multiply with 100
+CI_reporting_severe_anywithin_freq <-
+  binom.test(n_reporting_severe_anywithin, n_severe_anywithin_sample)$conf.int*100
 
 ## How many trials with *any* within-registry changes report changes?
 dat_pub <- dat_pub %>%
@@ -1014,36 +1163,54 @@ dat_pub <- dat_pub %>%
     )
   )
 n_reporting_any_anywithin <- sum(dat_pub$reporting_any_anywithin, na.rm = TRUE)
-p_reporting_any_anywithin <- sum(dat_pub$reporting_any_anywithin, na.rm = TRUE)/sum(dat_pub$p_o_change_anywithin, na.rm = TRUE)*100
+n_any_anywithin_sample <- sum(dat_pub$p_o_change_anywithin, na.rm = TRUE)
+p_reporting_any_anywithin <- n_reporting_any_anywithin / n_any_anywithin_sample * 100
+CI_reporting_any_anywithin <-
+  binom.bayes(n_reporting_any_anywithin, n_any_anywithin_sample) # multiply with 100
+CI_reporting_any_anywithin_freq <-
+  binom.test(n_reporting_any_anywithin, n_any_anywithin_sample)$conf.int*100
 
 
 
 ## ---- RESEARCH QUESTION 7 ----------------------------------------------------
 
-## Based on publications: 
+## Based on publications:
 ## We will determine the proportion of trials with transparent reporting of
 ## “classical” outcome changes in the publication.
 
 ## How many trials with severe registry-publication changes report changes?
 dat_pub <- dat_pub %>%
   mutate(
-    reporting_any_anywithin = if_else(
+    reporting_severe_reg_pub = if_else(
       p_o_change_severe_reg_pub == TRUE & pub_outcome_reference_binary == "1",
       TRUE,
       FALSE
     )
   )
-n_reporting_any_anywithin <- sum(dat_pub$reporting_any_anywithin, na.rm = TRUE)
-p_reporting_any_anywithin <- sum(dat_pub$reporting_any_anywithin, na.rm = TRUE)/sum(dat_pub$p_o_change_severe_reg_pub, na.rm = TRUE)*100
+n_reporting_severe_reg_pub <- sum(dat_pub$reporting_severe_reg_pub, na.rm = TRUE)
+n_severe_reg_pub_sample <- sum(dat_pub$p_o_change_severe_reg_pub, na.rm = TRUE)
+p_reporting_severe_reg_pub <- n_reporting_severe_reg_pub / n_severe_reg_pub_sample * 100
+CI_reporting_severe_reg_pub <-
+  binom.bayes(n_reporting_severe_reg_pub, n_severe_reg_pub_sample) # multiply with 100
+CI_reporting_severe_reg_pub_freq <-
+  binom.test(n_reporting_severe_reg_pub, n_severe_reg_pub_sample)$conf.int*100
 
 ## How many trials with any registry-publication changes report changes?
 dat_pub <- dat_pub %>%
   mutate(
-    reporting_any_anywithin = if_else(
+    reporting_any_reg_pub = if_else(
       p_o_change_reg_pub == TRUE & pub_outcome_reference_binary == "1",
       TRUE,
       FALSE
     )
   )
-n_reporting_any_anywithin <- sum(dat_pub$reporting_any_anywithin, na.rm = TRUE)
-p_reporting_any_anywithin <- sum(dat_pub$reporting_any_anywithin, na.rm = TRUE)/sum(dat_pub$p_o_change_reg_pub, na.rm = TRUE)*100
+n_reporting_any_reg_pub <- sum(dat_pub$reporting_any_reg_pub, na.rm = TRUE)
+n_any_reg_pub_sample <- sum(dat_pub$p_o_change_reg_pub, na.rm = TRUE)
+p_reporting_any_reg_pub <- n_reporting_any_reg_pub / n_any_reg_pub_sample * 100
+CI_reporting_any_reg_pub <-
+  prop.test(n_reporting_any_reg_pub, n_any_reg_pub_sample)$conf.int * 100
+
+CI_reporting_any_reg_pub  <-
+  binom.bayes(n_reporting_any_reg_pub, n_any_reg_pub_sample) # multiply with 100
+CI_reporting_any_reg_pub_freq <-
+  binom.test(n_reporting_any_reg_pub, n_any_reg_pub_sample)$conf.int*100
