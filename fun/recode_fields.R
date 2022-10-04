@@ -38,21 +38,25 @@ categorisefields <- function(x) {
         str_detect(medical_field, 'Reviews and References \\(medical\\)') ~
         'General Medicine',
       
+      # Surgery
+      # (this category is based on parts of Scopus category 27: Medicine)
+      str_detect(medical_field, 'Orthopedics and Sports Medicine') |
+        str_detect(medical_field, 'Surgery') ~
+        'Surgery',
+      
       # Internal Medicine
       # (this category is based on parts of Scopus category 27: Medicine)
-      str_detect(medical_field, 'Anatomy') |
-        str_detect(medical_field, 'Cardiology and Cardiovascular Medicine') |
+      str_detect(medical_field, 'Cardiology and Cardiovascular Medicine') |
         str_detect(medical_field, 'Endocrinology, Diabetes and Metabolism') |
         str_detect(medical_field, 'Gastroenterology') |
+        str_detect(medical_field, 'Geriatrics and Gerontology') |
         str_detect(medical_field, 'Hematology') |
         str_detect(medical_field, 'Hepatology') |
-        str_detect(medical_field, 'Histology') |
         str_detect(medical_field, 'Immunology and Allergy') |
         str_detect(medical_field, 'Internal Medicine') |
         str_detect(medical_field, 'Nephrology') |
-        str_detect(medical_field, 'Otorhinolaryngology') |
         str_detect(medical_field, 'Pulmonary and Respiratory Medicine') |
-        str_detect(medical_field, 'Surgery') |
+        str_detect(medical_field, 'Rheumatology') |
         str_detect(medical_field, 'Transplantation') ~
         'Internal Medicine',
       
@@ -61,36 +65,40 @@ categorisefields <- function(x) {
       str_detect(medical_field, 'Oncology') ~
         'Oncology',
       
-      # Age- & Gender-related Medicine
+      # Family & Reproductive Medicine
       # (this category is based on parts of Scopus category 27: Medicine)
-      str_detect(medical_field, 'Embryology') |
-        str_detect(medical_field, 'Family Practice') |
-        str_detect(medical_field, 'Geriatrics and Gerontology') |
+      str_detect(medical_field, 'Family Practice') |
         str_detect(medical_field, 'Obstetrics and Gynecology') |
         str_detect(medical_field, 'Pediatrics, Perinatology and Child Health') |
-        str_detect(medical_field, 'Reproductive Medicine') |
         str_detect(medical_field, 'Urology') ~
-        'Age- & Gender-related Medicine',
+        'Family & Reproductive Medicine',
       
       # Other Clinical Fields
       # (this category is based on parts of Scopus category 27: Medicine)
       str_detect(medical_field, 'Dermatology') |
+        str_detect(medical_field, 'Embryology') |
         str_detect(medical_field, 'Emergency Medicine') |
         str_detect(medical_field, 'Ophthalmology') |
-        str_detect(medical_field, 'Orthopedics and Sports Medicine') |
-        str_detect(medical_field, 'Rheumatology') ~
-        'Other Clinical Fields',
-
-      # Various Medical Fields
+        str_detect(medical_field, 'Otorhinolaryngology') |
+        str_detect(medical_field, 'Reproductive Medicine') ~
+        'Other Clinical Field',
+      
+      # Public Health
       # (this category is based on parts of Scopus category 27: Medicine)
       str_detect(medical_field, 'Epidemiology') |
+        str_detect(medical_field, 'Public Health, Environmental and Occupational Health') ~
+        'Epidemiology and Public Health',
+
+      # Other Medical Fields
+      # (this category is based on parts of Scopus category 27: Medicine)
+      str_detect(medical_field, 'Anatomy') |
         str_detect(medical_field, 'Health Informatics') |
         str_detect(medical_field, 'Health Policy') |
+        str_detect(medical_field, 'Histology') |
         str_detect(medical_field, 'Pathology and Forensic Medicine') |
-        str_detect(medical_field, 'Public Health, Environmental and Occupational Health') |
         str_detect(medical_field, 'Radiology, Nuclear Medicine and Imaging') |
         str_detect(medical_field, 'Rehabilitation') ~
-        'Various Medical Fields',
+        'Other Medical Field',
       
       # Neuroscience
       # (unless noted, this category is based on Scopus category 28: Neuroscience)
