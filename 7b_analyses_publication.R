@@ -530,7 +530,7 @@ dat_sample_checks <- dat %>%
   filter(has_medical_field == FALSE)
 rm(dat_sample_checks)
 
-source('functions/recode_fields.R') # to keep the algorithm out of this script
+source('fun/recode_fields.R') # to keep the algorithm out of this script
 
 ## recode the medical fields variable into 'General' and 'Specialty'
 dat <- dat %>%
