@@ -743,60 +743,60 @@ ggsave("Figure2.pdf",
 ## the model will be estimated with a generalised linear model (logistic
 ## regression)
 
-# ## bayesian model
-# model_RQ2 <- brm(
-#   as.numeric(p_o_change_anywithin) ~
-#     phase_recoded +
-#     main_sponsor +
-#     publication_year +
-#     registration_year +
-#     # medical_field_recoded +
-#     medical_field_recoded_binary +
-#     registry +
-#     is_multicentric +
-#     enrollment +
-#     intervention_type_recoded,
-#   family="binomial",
-#   data = dat,
-#   cores = getOption('mc.cores', 2),
-#   seed = 227 # I again asked Siri for a number between 1 and 999
-# )
-# summary(model_RQ2)
-# 
-# ## see what priors the model used
-# get_prior(
-#   as.numeric(p_o_change_anywithin) ~
-#     phase_recoded +
-#     main_sponsor +
-#     publication_year +
-#     registration_year +
-#     # medical_field_recoded +
-#     medical_field_recoded_binary +
-#     registry +
-#     is_multicentric +
-#     enrollment +
-#     intervention_type_recoded,
-#   family="binomial",
-#   data = dat
-# )
-# 
-# ## freequentist model
-# model_RQ2_freq <- glm(
-#   p_o_change_anywithin ~
-#     phase_recoded +
-#     main_sponsor +
-#     publication_year +
-#     registration_year +
-#     # medical_field_recoded +
-#     medical_field_recoded_binary +
-#     registry +
-#     is_multicentric +
-#     enrollment +
-#     intervention_type_recoded,
-#   family="binomial",
-#   data = dat
-# )
-# sumary(model_RQ2_freq)
+## bayesian model
+model_RQ2 <- brm(
+  as.numeric(p_o_change_anywithin) ~
+    phase_recoded +
+    main_sponsor +
+    publication_year +
+    registration_year +
+    medical_field_recoded +
+    # medical_field_recoded_binary +
+    registry +
+    is_multicentric +
+    enrollment +
+    intervention_type_recoded,
+  family="binomial",
+  data = dat,
+  cores = getOption('mc.cores', 2),
+  seed = 227 # I again asked Siri for a number between 1 and 999
+)
+summary(model_RQ2)
+
+## see what priors the model used
+get_prior(
+  as.numeric(p_o_change_anywithin) ~
+    phase_recoded +
+    main_sponsor +
+    publication_year +
+    registration_year +
+    medical_field_recoded +
+    # medical_field_recoded_binary +
+    registry +
+    is_multicentric +
+    enrollment +
+    intervention_type_recoded,
+  family="binomial",
+  data = dat
+)
+
+## frequentist model
+model_RQ2_freq <- glm(
+  p_o_change_anywithin ~
+    phase_recoded +
+    main_sponsor +
+    publication_year +
+    registration_year +
+    medical_field_recoded +
+    # medical_field_recoded_binary +
+    registry +
+    is_multicentric +
+    enrollment +
+    intervention_type_recoded,
+  family="binomial",
+  data = dat
+)
+summary(model_RQ2_freq)
 
 
 
@@ -812,21 +812,45 @@ ggsave("Figure2.pdf",
 ## any changes between latest registry entry and publication
 n_any_reg_pub <- sum(dat$p_o_change_reg_pub, na.rm = T)
 p_any_reg_pub <- sum(dat$p_o_change_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
+CI_any_reg_pub <-
+  binom.bayes(n_any_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+CI_any_reg_pub_freq <-
+  binom.test(n_any_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## severe changes between latest registry entry and publication
 n_severe_reg_pub <- sum(dat$p_o_change_severe_reg_pub, na.rm = T)
 p_severe_reg_pub <- sum(dat$p_o_change_severe_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
+CI_severe_reg_pub <-
+  binom.bayes(n_severe_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+CI_severe_reg_pub_freq <-
+  binom.test(n_severe_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## non-severe changes between latest registry entry and publication
 n_nonsevere_reg_pub <- sum(dat$p_o_change_nonsevere_reg_pub, na.rm = T)
 p_nonsevere_reg_pub <- sum(dat$p_o_change_nonsevere_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
+CI_nonsevere_reg_pub <-
+  binom.bayes(n_nonsevere_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+CI_nonsevere_reg_pub_freq <-
+  binom.test(n_nonsevere_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## non-severe changes (changes) between latest registry entry and publication
 n_nonsevere_c_reg_pub <- sum(dat$p_o_change_nonsevere_c_reg_pub, na.rm = T)
 p_nonsevere_c_reg_pub <- sum(dat$p_o_change_nonsevere_c_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
+CI_nonsevere_c_reg_pub <-
+  binom.bayes(n_nonsevere_c_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+CI_nonsevere_c_reg_pub_freq <-
+  binom.test(n_nonsevere_c_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## non-severe changes (additions or omissions) between latest registry entry and publication
 n_nonsevere_ao_reg_pub <- sum(dat$p_o_change_nonsevere_ao_reg_pub, na.rm = T)
 p_nonsevere_ao_reg_pub <- sum(dat$p_o_change_nonsevere_ao_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
+CI_nonsevere_ao_reg_pub <-
+  binom.bayes(n_nonsevere_ao_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+CI_nonsevere_ao_reg_pub_freq <-
+  binom.test(n_nonsevere_ao_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## no changes between latest registry entry and publication
 n_no_change_reg_pub <- sum(dat$no_change_reg_pub, na.rm = T)
-p_no_change_reg_pub <- sum(dat$no_change_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
+p_no_change_reg_pub<- sum(dat$no_change_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
+CI_no_change_reg_pub <-
+  binom.bayes(n_no_change_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+CI_no_change_reg_pub_freq <-
+  binom.test(n_no_change_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 
 
 
@@ -1046,61 +1070,61 @@ ggsave("FigureS2.pdf",
 ## justify the selection of variables and give precise definitions before
 ## starting our analysis. We will use descriptive statistics where appropriate.
 
-# ## bayesian model
-# library(brms)
-# model_RQ4 <- brm(
-#   as.numeric(p_o_change_reg_pub) ~
-#     phase_recoded +
-#     main_sponsor +
-#     publication_year +
-#     registration_year +
-#     # medical_field_recoded +
-#     medical_field_recoded_binary +
-#     registry +
-#     is_multicentric +
-#     enrollment +
-#     intervention_type_recoded,
-#   family="binomial",
-#   data = dat_pub,
-#   cores = getOption('mc.cores', 2),
-#   seed = XYX # I again asked Siri for a number between 1 and 999
-# )
-# summary(model_RQ4)
-# 
-# ## see what priors the model used
-# get_prior(
-#   as.numeric(p_o_change_anywithin) ~
-#     phase_recoded +
-#     main_sponsor +
-#     publication_year +
-#     registration_year +
-#     # medical_field_recoded +
-#     medical_field_recoded_binary +
-#     registry +
-#     is_multicentric +
-#     enrollment +
-#     intervention_type_recoded,
-#   family="binomial",
-#   data = dat_pub
-# )
-# 
-# ## frequentist model
-# model_RQ4_freq <- glm(
-#   p_o_change_reg_pub ~
-#     phase_recoded +
-#     main_sponsor +
-#     publication_year +
-#     registration_year +
-#     # medical_field_recoded +
-#     medical_field_recoded_binary +
-#     registry +
-#     is_multicentric +
-#     enrollment +
-#     intervention_type_recoded,
-#   family="binomial",
-#   data = dat_pub
-# )
-# sumary(model_RQ4_freq)
+## bayesian model
+library(brms)
+model_RQ4 <- brm(
+  as.numeric(p_o_change_reg_pub) ~
+    phase_recoded +
+    main_sponsor +
+    publication_year +
+    registration_year +
+    medical_field_recoded +
+    # medical_field_recoded_binary +
+    registry +
+    is_multicentric +
+    enrollment +
+    intervention_type_recoded,
+  family="binomial",
+  data = dat_pub,
+  cores = getOption('mc.cores', 2),
+  seed = 754 # I again asked Siri for a number between 1 and 999
+)
+summary(model_RQ4)
+
+## see what priors the model used
+get_prior(
+  as.numeric(p_o_change_anywithin) ~
+    phase_recoded +
+    main_sponsor +
+    publication_year +
+    registration_year +
+    medical_field_recoded +
+    # medical_field_recoded_binary +
+    registry +
+    is_multicentric +
+    enrollment +
+    intervention_type_recoded,
+  family="binomial",
+  data = dat_pub
+)
+
+## frequentist model
+model_RQ4_freq <- glm(
+  p_o_change_reg_pub ~
+    phase_recoded +
+    main_sponsor +
+    publication_year +
+    registration_year +
+    medical_field_recoded +
+    # medical_field_recoded_binary +
+    registry +
+    is_multicentric +
+    enrollment +
+    intervention_type_recoded,
+  family="binomial",
+  data = dat_pub
+)
+sumary(model_RQ4_freq)
 
 
 
@@ -1207,9 +1231,6 @@ dat_pub <- dat_pub %>%
 n_reporting_any_reg_pub <- sum(dat_pub$reporting_any_reg_pub, na.rm = TRUE)
 n_any_reg_pub_sample <- sum(dat_pub$p_o_change_reg_pub, na.rm = TRUE)
 p_reporting_any_reg_pub <- n_reporting_any_reg_pub / n_any_reg_pub_sample * 100
-CI_reporting_any_reg_pub <-
-  prop.test(n_reporting_any_reg_pub, n_any_reg_pub_sample)$conf.int * 100
-
 CI_reporting_any_reg_pub  <-
   binom.bayes(n_reporting_any_reg_pub, n_any_reg_pub_sample) # multiply with 100
 CI_reporting_any_reg_pub_freq <-
