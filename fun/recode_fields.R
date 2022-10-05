@@ -11,7 +11,7 @@
 categorisefields_binary <- function(x) {
   mutate(
     x,
-    medical_field_recoded_binary = if_else(
+    medical_field_recoded_binary = case_when(
       str_detect(medical_field, 'Multidisciplinary') |
         str_detect(medical_field, 'Medicine \\(miscellaneous\\)') |
         str_detect(medical_field, 'Reviews and References \\(medical\\)') |
@@ -19,9 +19,9 @@ categorisefields_binary <- function(x) {
         str_detect(medical_field, 'General Pharmacology, Toxicology and Pharmaceutics') |
         str_detect(medical_field, 'General Psychology') |
         str_detect(medical_field, 'General Dentistry') |
-        str_detect(medical_field, 'General Health Professions'),
+        str_detect(medical_field, 'General Health Professions') ~
       'General',
-      'Specialty'
+      TRUE ~ 'Specialty'
     )
   )
 }
