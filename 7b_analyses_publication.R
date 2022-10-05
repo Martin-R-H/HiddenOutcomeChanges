@@ -672,25 +672,25 @@ rm(dat_test_rec)
 
 dat_Figure2 <- tribble(
 
-  ~phase,             ~type,                  ~percentage,
+  ~phase,             ~type,                      ~percentage,
 
-  'recruitment',      'severe change',        p_severe_rec,
-  'recruitment',      'non-severe change',    p_nonsevere_c_rec,
-  'recruitment',      'non-severe add/omm',   p_nonsevere_ao_rec,
-  'recruitment',      'phase does not exist', p_no_phase_rec,
-# 'recruitment',      'no change',            p_no_change_rec,
+  'recruitment',      'major discrepancy',        p_severe_rec,
+  'recruitment',      'minor change',             p_nonsevere_c_rec,
+  'recruitment',      'minor addition/ommission', p_nonsevere_ao_rec,
+  'recruitment',      'phase does not exist',     p_no_phase_rec,
+# 'recruitment',      'no change',                p_no_change_rec,
 
-  'post-completion',  'severe change',        p_severe_postcomp,
-  'post-completion',  'non-severe change',    p_nonsevere_c_postcomp,
-  'post-completion',  'non-severe add/omm',   p_nonsevere_ao_postcomp,
-  'post-completion',  'phase does not exist', p_no_phase_postcomp,
-# 'post-completion',  'no change',            p_no_change_postcomp,
+  'post-completion',  'major discrepancy',        p_severe_postcomp,
+  'post-completion',  'minor change',             p_nonsevere_c_postcomp,
+  'post-completion',  'minor addition/ommission', p_nonsevere_ao_postcomp,
+  'post-completion',  'phase does not exist',     p_no_phase_postcomp,
+# 'post-completion',  'no change',                p_no_change_postcomp,
 
-  'post-publication', 'severe change',        p_severe_postpub,
-  'post-publication', 'non-severe change',    p_nonsevere_c_postpub,
-  'post-publication', 'non-severe add/omm',   p_nonsevere_ao_postpub,
-  'post-publication', 'phase does not exist', p_no_phase_postpub #,
-# 'post-publication', 'no change',            p_no_change_postpub
+  'post-publication', 'major discrepancy',        p_severe_postpub,
+  'post-publication', 'minor change',             p_nonsevere_c_postpub,
+  'post-publication', 'minor addition/ommission', p_nonsevere_ao_postpub,
+  'post-publication', 'phase does not exist',     p_no_phase_postpub #,
+# 'post-publication', 'no change',                p_no_change_postpub
 
 ) %>%
   mutate(phase = factor(phase)) %>%
@@ -703,9 +703,9 @@ dat_Figure2 <- tribble(
   mutate(
     type = fct_relevel(
       type,
-      'severe change',
-      'non-severe change',
-      'non-severe add/omm'
+      'major discrepancy',
+      'minor change',
+      'minor addition/ommission'
     )
   )
 
@@ -984,8 +984,8 @@ FigureS1 <- dat_FigureS1 %>%
         panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"),
         panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) +
   ylab("Proportion of trials") +
-  xlab('"Severe" outcome changes across multiple time points') #+
-# ggtitle(label = "'Severe' primary outcome switches", subtitle = 'Sample of 300 registry entries and trial results publications')
+  xlab('Major discrepancies across multiple time points') #+
+# ggtitle(label = "Major discrepancies in outcomes", subtitle = 'Sample of 300 registry entries and trial results publications')
 FigureS1
 
 ggsave("FigureS1.pdf",
@@ -1046,8 +1046,8 @@ FigureS2 <- dat_FigureS2 %>%
         panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"),
         panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) +
   ylab("Proportion of trials") +
-  xlab('"Less severe" outcome changes across multiple time points') # +
-# ggtitle(label = '"Less severe" primary outcome changes', subtitle = 'Sample of 300 registry entries and trial results publications')
+  xlab('Minor discrepancies across multiple time points') # +
+# ggtitle(label = 'Minor discrepancies in primary outcomes', subtitle = 'Sample of 300 registry entries and trial results publications')
 FigureS2
 
 ggsave("FigureS2.pdf",
