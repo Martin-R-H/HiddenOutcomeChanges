@@ -14,7 +14,7 @@ dat <- read_csv('data/processed_history_data_short.csv')
 
 ## read in the dataframe from Numbat
 dat_ratings_wh <- read_tsv(
-  'http://numbat.bgcarlisle.com/fmetrics/export/2022-08-12_050654-form_2-refset_9-final.tsv'
+  'http://numbat.bgcarlisle.com/fmetrics/export/2022-10-11_073641-form_2-refset_9-final.tsv'
 ) %>%
   select(
     c(

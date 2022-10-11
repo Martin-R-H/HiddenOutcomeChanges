@@ -641,10 +641,10 @@ n_no_change_postpub <- sum(dat$no_change_postpub)
 p_no_change_postpub <- sum(dat$no_change_postpub)/nrow(dat)*100
 
 ## run some tests
-# test_that(
-#   'In the recruitment phase, do trials with changes, with no changes and where the phase does not exist add up?',
-#   expect_equal(n_any_rec + n_no_phase_rec + n_no_change_rec, nrow(dat))
-# )
+test_that(
+  'In the recruitment phase, do trials with changes, with no changes and where the phase does not exist add up?',
+  expect_equal(n_any_rec + n_no_phase_rec + n_no_change_rec, nrow(dat))
+)
 test_that(
   'In the post-completion phase, do trials with changes, with no changes and where the phase does not exist add up?',
   expect_equal(n_any_postcomp + n_no_phase_postcomp + n_no_change_postcomp, nrow(dat))
@@ -653,16 +653,7 @@ test_that(
   'In the post-publication phase, do trials with changes, with no changes and where the phase does not exist add up?',
   expect_equal(n_any_postpub + n_no_phase_postpub + n_no_change_postpub, nrow(dat))
 )
-## the test fails for the recruitment phase, there is one too many! it is
-## apparently categorised in more than one of the above categories - find it:
-dat_test_rec <- dat %>%
-  filter(
-    (no_change_rec == TRUE & no_rec_phase == TRUE) | (p_o_change_rec == TRUE & no_rec_phase == TRUE) | (no_change_rec == TRUE & p_o_change_rec == TRUE)
-  )
-## the trial has no outcome change during recruitment, but is accidentally rated
-## as such, which is why it is both in the 'any change' and in the 'no change'
-## categories
-rm(dat_test_rec)
+
 
 
 ## ---- RESEARCH QUESTION 1 (Figure 2) -----------------------------------------
@@ -807,7 +798,7 @@ summary(model_RQ2_freq)
 ## to do this, it is sometimes helpful to turn off scientific notation in R
 ## using options(scipen=999)
 exp(coef(model_RQ2_freq))
-## the finalfit package automattically creates a table with frequencies and means
+## the finalfit package automatically creates a table with frequencies and means
 explanatory <- c(
   'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
 )
@@ -1272,3 +1263,4 @@ CI_reporting_any_reg_pub  <-
   binom.bayes(n_reporting_any_reg_pub, n_any_reg_pub_sample) # multiply with 100
 CI_reporting_any_reg_pub_freq <-
   binom.test(n_reporting_any_reg_pub, n_any_reg_pub_sample)$conf.int*100
+
