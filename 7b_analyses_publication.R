@@ -1123,8 +1123,8 @@ model_RQ4_freq <- glm(
     main_sponsor +
     publication_year +
     registration_year +
-    # medical_field_recoded +
-    medical_field_recoded_binary +
+    medical_field_recoded +
+    # medical_field_recoded_binary +
     registry +
     is_multicentric +
     enrollment +
