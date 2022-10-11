@@ -3,6 +3,8 @@ library(lubridate)
 library(binom)
 library(ggupset)
 library(brms)
+library(finalfit)
+library(glmtoolbox)
 library(testthat)
 
 set.seed(638) # I asked Siri to generate a random number between 1 and 1000
@@ -672,60 +674,64 @@ rm(dat_test_rec)
 
 dat_Figure2 <- tribble(
 
-  ~phase,             ~type,                      ~percentage,
+  ~Phase,             ~Type,                              ~Percentage,
 
-  'recruitment',      'major discrepancy',        p_severe_rec,
-  'recruitment',      'minor change',             p_nonsevere_c_rec,
-  'recruitment',      'minor addition/ommission', p_nonsevere_ao_rec,
-  'recruitment',      'phase does not exist',     p_no_phase_rec,
-# 'recruitment',      'no change',                p_no_change_rec,
+  'recruitment',      'major discrepancy',                p_severe_rec,
+  'recruitment',      'minor disc.: change',              p_nonsevere_c_rec,
+  'recruitment',      'minor disc.: addition/ommission',  p_nonsevere_ao_rec,
+  'recruitment',      'phase does not exist',             p_no_phase_rec,
+# 'recruitment',      'no change',                        p_no_change_rec,
 
-  'post-completion',  'major discrepancy',        p_severe_postcomp,
-  'post-completion',  'minor change',             p_nonsevere_c_postcomp,
-  'post-completion',  'minor addition/ommission', p_nonsevere_ao_postcomp,
-  'post-completion',  'phase does not exist',     p_no_phase_postcomp,
-# 'post-completion',  'no change',                p_no_change_postcomp,
+  'post-completion',  'major discrepancy',                p_severe_postcomp,
+  'post-completion',  'minor disc.: change',              p_nonsevere_c_postcomp,
+  'post-completion',  'minor disc.: addition/ommission',  p_nonsevere_ao_postcomp,
+  'post-completion',  'phase does not exist',             p_no_phase_postcomp,
+# 'post-completion',  'no change',                        p_no_change_postcomp,
 
-  'post-publication', 'major discrepancy',        p_severe_postpub,
-  'post-publication', 'minor change',             p_nonsevere_c_postpub,
-  'post-publication', 'minor addition/ommission', p_nonsevere_ao_postpub,
-  'post-publication', 'phase does not exist',     p_no_phase_postpub #,
-# 'post-publication', 'no change',                p_no_change_postpub
+  'post-publication', 'major discrepancy',                p_severe_postpub,
+  'post-publication', 'minor disc.: change',              p_nonsevere_c_postpub,
+  'post-publication', 'minor disc.: addition/ommission',  p_nonsevere_ao_postpub,
+  'post-publication', 'phase does not exist',             p_no_phase_postpub #,
+# 'post-publication', 'no change',                        p_no_change_postpub
 
 ) %>%
-  mutate(phase = factor(phase)) %>%
+  mutate(phase = factor(Phase)) %>%
   mutate(
-    phase = fct_relevel(phase, 'post-publication', 'post-completion', 'recruitment')
+    Phase = fct_relevel(Phase, 'post-publication', 'post-completion', 'recruitment')
   ) %>%
   mutate(
-    type = factor(type)
+    Type = factor(Type)
   ) %>%
   mutate(
-    type = fct_relevel(
-      type,
+    Type = fct_relevel(
+      Type,
       'major discrepancy',
-      'minor change',
-      'minor addition/ommission'
+      'minor disc.: change',
+      'minor disc.: addition/ommission'
     )
   )
 
 Figure2 <- ggplot(dat_Figure2) +
   aes(
-    x = phase,
-    y = percentage,
-    fill = type
+    x = Phase,
+    y = Percentage,
+    fill = Type
   ) +
   geom_bar(position = 'stack', stat = 'identity') +
   coord_flip() + # we  use this to make it horizontal
-  scale_fill_manual(values = c('#994455', '#997700', '#EECC66', '#CCCCCC'))
+  scale_fill_manual(values = c('#994455', '#997700', '#EECC66', '#CCCCCC')) +
+  theme(panel.background=element_rect(fill = "white", colour = "lightgrey"),
+        panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"),
+        panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) +
+  theme(legend.position = 'bottom')
 Figure2
 
-ggsave("Figure2.pdf",
-       Figure2,
-       scale = 1.25,
-       width = 7,
-       height = 5
-)
+# ggsave("Figure2.pdf",
+#        Figure2,
+#        scale = 1.25,
+#        width = 7,
+#        height = 5
+# )
 
 
 
@@ -744,41 +750,41 @@ ggsave("Figure2.pdf",
 ## regression)
 
 ## bayesian model
-model_RQ2 <- brm(
-  as.numeric(p_o_change_anywithin) ~
-    phase_recoded +
-    main_sponsor +
-    publication_year +
-    registration_year +
-    medical_field_recoded +
-    # medical_field_recoded_binary +
-    registry +
-    is_multicentric +
-    enrollment +
-    intervention_type_recoded,
-  family="binomial",
-  data = dat,
-  cores = getOption('mc.cores', 2),
-  seed = 227 # I again asked Siri for a number between 1 and 999
-)
-summary(model_RQ2)
+# model_RQ2 <- brm(
+#   as.numeric(p_o_change_anywithin) ~
+#     phase_recoded +
+#     main_sponsor +
+#     publication_year +
+#     registration_year +
+#     medical_field_recoded +
+#     # medical_field_recoded_binary +
+#     registry +
+#     is_multicentric +
+#     enrollment +
+#     intervention_type_recoded,
+#   family="binomial",
+#   data = dat,
+#   cores = getOption('mc.cores', 2),
+#   seed = 227 # I again asked Siri for a number between 1 and 999
+# )
+# summary(model_RQ2)
 
 ## see what priors the model used
-get_prior(
-  as.numeric(p_o_change_anywithin) ~
-    phase_recoded +
-    main_sponsor +
-    publication_year +
-    registration_year +
-    medical_field_recoded +
-    # medical_field_recoded_binary +
-    registry +
-    is_multicentric +
-    enrollment +
-    intervention_type_recoded,
-  family="binomial",
-  data = dat
-)
+# get_prior(
+#   as.numeric(p_o_change_anywithin) ~
+#     phase_recoded +
+#     main_sponsor +
+#     publication_year +
+#     registration_year +
+#     medical_field_recoded +
+#     # medical_field_recoded_binary +
+#     registry +
+#     is_multicentric +
+#     enrollment +
+#     intervention_type_recoded,
+#   family="binomial",
+#   data = dat
+# )
 
 ## frequentist model
 model_RQ2_freq <- glm(
@@ -788,7 +794,6 @@ model_RQ2_freq <- glm(
     publication_year +
     registration_year +
     medical_field_recoded +
-    # medical_field_recoded_binary +
     registry +
     is_multicentric +
     enrollment +
@@ -797,6 +802,19 @@ model_RQ2_freq <- glm(
   data = dat
 )
 summary(model_RQ2_freq)
+## for interpretability, get the exponentiated coefficients, which transformes
+## them into odds rations
+## to do this, it is sometimes helpful to turn off scientific notation in R
+## using options(scipen=999)
+exp(coef(model_RQ2_freq))
+## the finalfit package automattically creates a table with frequencies and means
+explanatory <- c(
+  'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
+)
+dependent <- 'p_o_change_anywithin'
+table_RQ2_freq <- finalfit(dat, dependent, explanatory)
+## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
+hltest(model_RQ2_freq)
 
 
 
@@ -928,12 +946,12 @@ Figure3 <- dat_Figure3 %>%
 # ggtitle(label = '"Less severe" primary outcome changes', subtitle = 'Sample of 300 registry entries and trial results publications')
 Figure3
 
-ggsave('Figure3.pdf',
-       Figure3,
-       scale = 1.25,
-       width = 7,
-       height = 5
-)
+# ggsave('Figure3.pdf',
+#        Figure3,
+#        scale = 1.25,
+#        width = 7,
+#        height = 5
+# )
 
 ## Figure S1: severe changes in the sample of 300
 links <- dat_pub %>%
@@ -988,12 +1006,12 @@ FigureS1 <- dat_FigureS1 %>%
 # ggtitle(label = "Major discrepancies in outcomes", subtitle = 'Sample of 300 registry entries and trial results publications')
 FigureS1
 
-ggsave("FigureS1.pdf",
-       FigureS1,
-       scale = 1.25,
-       width = 7,
-       height = 5
-)
+# ggsave("FigureS1.pdf",
+#        FigureS1,
+#        scale = 1.25,
+#        width = 7,
+#        height = 5
+# )
 
 ## Figure S2: UpSet plot for non-severe changes in the sample of 300
 # Transform links into list column of intersection sets
@@ -1050,12 +1068,12 @@ FigureS2 <- dat_FigureS2 %>%
 # ggtitle(label = 'Minor discrepancies in primary outcomes', subtitle = 'Sample of 300 registry entries and trial results publications')
 FigureS2
 
-ggsave("FigureS2.pdf",
-       FigureS2,
-       scale = 1.25,
-       width = 7,
-       height = 5
-)
+# ggsave("FigureS2.pdf",
+#        FigureS2,
+#        scale = 1.25,
+#        width = 7,
+#        height = 5
+# )
 
 
 
@@ -1071,42 +1089,41 @@ ggsave("FigureS2.pdf",
 ## starting our analysis. We will use descriptive statistics where appropriate.
 
 ## bayesian model
-library(brms)
-model_RQ4 <- brm(
-  as.numeric(p_o_change_reg_pub) ~
-    phase_recoded +
-    main_sponsor +
-    publication_year +
-    registration_year +
-    medical_field_recoded +
-    # medical_field_recoded_binary +
-    registry +
-    is_multicentric +
-    enrollment +
-    intervention_type_recoded,
-  family="binomial",
-  data = dat_pub,
-  cores = getOption('mc.cores', 2),
-  seed = 754 # I again asked Siri for a number between 1 and 999
-)
-summary(model_RQ4)
+# model_RQ4 <- brm(
+#   as.numeric(p_o_change_reg_pub) ~
+#     phase_recoded +
+#     main_sponsor +
+#     publication_year +
+#     registration_year +
+#     # medical_field_recoded +
+#     medical_field_recoded_binary +
+#     registry +
+#     is_multicentric +
+#     enrollment +
+#     intervention_type_recoded,
+#   family="binomial",
+#   data = dat_pub,
+#   cores = getOption('mc.cores', 2),
+#   seed = 754 # I again asked Siri for a number between 1 and 999
+# )
+# summary(model_RQ4)
 
 ## see what priors the model used
-get_prior(
-  as.numeric(p_o_change_anywithin) ~
-    phase_recoded +
-    main_sponsor +
-    publication_year +
-    registration_year +
-    medical_field_recoded +
-    # medical_field_recoded_binary +
-    registry +
-    is_multicentric +
-    enrollment +
-    intervention_type_recoded,
-  family="binomial",
-  data = dat_pub
-)
+# get_prior(
+#   as.numeric(p_o_change_anywithin) ~
+#     phase_recoded +
+#     main_sponsor +
+#     publication_year +
+#     registration_year +
+#     # medical_field_recoded +
+#     medical_field_recoded_binary +
+#     registry +
+#     is_multicentric +
+#     enrollment +
+#     intervention_type_recoded,
+#   family="binomial",
+#   data = dat_pub
+# )
 
 ## frequentist model
 model_RQ4_freq <- glm(
@@ -1115,8 +1132,8 @@ model_RQ4_freq <- glm(
     main_sponsor +
     publication_year +
     registration_year +
-    medical_field_recoded +
-    # medical_field_recoded_binary +
+    # medical_field_recoded +
+    medical_field_recoded_binary +
     registry +
     is_multicentric +
     enrollment +
@@ -1124,7 +1141,20 @@ model_RQ4_freq <- glm(
   family="binomial",
   data = dat_pub
 )
-sumary(model_RQ4_freq)
+summary(model_RQ4_freq)
+## for interpretability, get the exponentiated coefficients, which transformes
+## them into odds rations
+## to do this, it is sometimes helpful to turn off scientific notation in R
+## using options(scipen=999)
+exp(coef(model_RQ4_freq))
+## the finalfit package automatically creates a table with frequencies and means
+explanatory <- c(
+  'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
+)
+dependent <- 'p_o_change_reg_pub'
+table_RQ4_freq <- finalfit(dat_pub, dependent, explanatory)
+## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
+hltest(model_RQ4_freq)
 
 
 
@@ -1135,14 +1165,14 @@ sumary(model_RQ4_freq)
 ## and ‘classical’ outcome switching.
 
 # ## bayesian model
-model_RQ5 <- brm(
-  as.numeric(p_o_change_reg_pub) ~ p_o_change_anywithin,
-  family = 'binomial',
-  data = dat_pub,
-  cores = getOption('mc.cores', 2),
-  seed = 827 # I again asked Siri for a number between 1 and 999
-)
-summary(model_RQ5)
+# model_RQ5 <- brm(
+#   as.numeric(p_o_change_reg_pub) ~ p_o_change_anywithin,
+#   family = 'binomial',
+#   data = dat_pub,
+#   cores = getOption('mc.cores', 2),
+#   seed = 827 # I again asked Siri for a number between 1 and 999
+# )
+# summary(model_RQ5)
 
 ## frequentist model
 model_RQ5_freq <- glm(
@@ -1151,6 +1181,13 @@ model_RQ5_freq <- glm(
   data = dat_pub
 )
 summary(model_RQ5_freq)
+exp(coef(model_RQ5_freq)) # options(scipen=999)
+## the finalfit package automatically creates a table with frequencies and means
+explanatory <- 'p_o_change_anywithin'
+dependent <- 'p_o_change_reg_pub'
+table_RQ5_freq <- finalfit(dat_pub, dependent, explanatory)
+## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
+hltest(model_RQ5_freq)
 
 
 
