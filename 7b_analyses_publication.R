@@ -443,7 +443,7 @@ dat <- dat %>%
       phase == 'Early Phase 1' | phase ==  'I' | phase == 'Phase 1' ~ 'Phase 1',
       phase == 'II' | phase ==  'IIa' | phase ==  'IIb' | phase ==  'Phase 1/Phase 2' | phase ==  'Phase 2' ~ 'Phase 2',
       phase == 'II-III' | phase ==  'III' | phase ==  'IIIb' | phase == 'Phase 2/Phase 3' | phase ==  'Phase 3' ~ 'Phase 3',
-      phase == 'IV' | phase ==  'Phase 4' ~ 'Phase 3',
+      phase == 'IV' | phase ==  'Phase 4' ~ 'Phase 4',
       TRUE ~ 'No phase'
     )
   ) %>%
