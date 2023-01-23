@@ -2,6 +2,7 @@ library(tidyverse)
 library(lubridate)
 library(binom)
 library(ggupset)
+library(networkD3) # for Sankey plot
 library(brms)
 library(finalfit)
 library(glmtoolbox)
@@ -294,6 +295,8 @@ test_that(
 
 ## ---- RESEARCH QUESTION 1 (Figure 2) -----------------------------------------
 
+## ATTENTION: Possibly obsolete.
+
 ## Figure 2:
 ## What are the changes that happen within the registry across study phases?
 ## To show this more concisely, we do a stacked bar chart for change types
@@ -511,9 +514,96 @@ CI_no_change_reg_pub_freq <-
 ## See Figure 1 from the protocol - maybe we need a more thorough assessment
 ## of pathways throughout a study when doing the Upset plot?
 
-## transform links into list column of intersection sets
 dat_pub <- dat %>%
   filter(has_publication_rating == TRUE)
+
+## Figure X: Sankey plot for changes in the sample of 300
+dat_Sankey_nodes <- tribble(
+  ~name, ~name_type,
+  'Major (Start vs Completion)', 'major',      # 0
+  'Minor (Start vs Completion)', 'minor',      # 1
+  'No Changes (Start vs Completion)', 'no_change',              # 2
+  'No Information', 'no_phase',                 # 3
+  'Major (Completion vs Pub.)',  'major', # 4
+  'Minor (Completion vs Pub.)', 'minor',  # 5
+  'No Changes (Completion vs Pub.)', 'no_change',          # 6
+  'No Information', 'no_phase',             # 7
+  'Major (Pub. vs Latest)', 'major', # 8
+  'Minor (Pub. vs Latest)', 'minor',# 9
+  'No Changes (Pub. vs Latest)', 'no_change',         # 10
+  'No Information', 'no_phase' #,            # 11
+  # 'Major (Latest vs Paper)', 'major', # 12
+  # 'Minor (Latest vs Paper)', 'minor', # 13
+  # 'No Change (Latest vs Paper)', 'no_change'          # 14
+)
+
+dat_Sankey_links <- tribble(
+  
+  ~source, ~target, ~value,
+  
+   0,  4, nrow(filter(dat, p_o_change_severe_rec == TRUE & p_o_change_severe_postcomp == TRUE)),
+   0,  5, nrow(filter(dat, p_o_change_severe_rec == TRUE & p_o_change_nonsevere_postcomp == TRUE)),
+   0,  6, nrow(filter(dat, p_o_change_severe_rec == TRUE & no_change_postcomp == TRUE)),
+   0,  7, nrow(filter(dat, p_o_change_severe_rec == TRUE & no_postcomp_phase == TRUE)),
+   1,  4, nrow(filter(dat, p_o_change_nonsevere_rec == TRUE & p_o_change_severe_postcomp == TRUE)),
+   1,  5, nrow(filter(dat, p_o_change_nonsevere_rec == TRUE & p_o_change_nonsevere_postcomp == TRUE)),
+   1,  6, nrow(filter(dat, p_o_change_nonsevere_rec == TRUE & no_change_postcomp == TRUE)),
+   1,  7, nrow(filter(dat, p_o_change_nonsevere_rec == TRUE & no_postcomp_phase == TRUE)),
+   2,  4, nrow(filter(dat, no_change_rec == TRUE & p_o_change_severe_postcomp == TRUE)),
+   2,  5, nrow(filter(dat, no_change_rec == TRUE & p_o_change_nonsevere_postcomp == TRUE)),
+   2,  6, nrow(filter(dat, no_change_rec == TRUE & no_change_postcomp == TRUE)),
+   2,  7, nrow(filter(dat, no_change_rec == TRUE & no_postcomp_phase == TRUE)),
+   3,  4, nrow(filter(dat, no_rec_phase == TRUE & p_o_change_severe_postcomp == TRUE)),
+   3,  5, nrow(filter(dat, no_rec_phase == TRUE & p_o_change_nonsevere_postcomp == TRUE)),
+   3,  6, nrow(filter(dat, no_rec_phase == TRUE & no_change_postcomp == TRUE)),
+   3,  7, nrow(filter(dat, no_rec_phase == TRUE & no_postcomp_phase == TRUE)),
+  
+   4,  8, nrow(filter(dat, p_o_change_severe_postcomp == TRUE & p_o_change_severe_postpub == TRUE)),
+   4,  9, nrow(filter(dat, p_o_change_severe_postcomp == TRUE & p_o_change_nonsevere_postpub == TRUE)),
+   4, 10, nrow(filter(dat, p_o_change_severe_postcomp == TRUE & no_change_postpub == TRUE)),
+   4, 11, nrow(filter(dat, p_o_change_severe_postcomp == TRUE & no_postpub_phase == TRUE)),
+   5,  8, nrow(filter(dat, p_o_change_nonsevere_postcomp == TRUE & p_o_change_severe_postpub == TRUE)),
+   5,  9, nrow(filter(dat, p_o_change_nonsevere_postcomp == TRUE & p_o_change_nonsevere_postpub == TRUE)),
+   5, 10, nrow(filter(dat, p_o_change_nonsevere_postcomp == TRUE & no_change_postpub == TRUE)),
+   5, 11, nrow(filter(dat, p_o_change_nonsevere_postcomp == TRUE & no_postpub_phase == TRUE)),
+   6,  8, nrow(filter(dat, no_change_postcomp == TRUE & p_o_change_severe_postpub == TRUE)),
+   6,  9, nrow(filter(dat, no_change_postcomp == TRUE & p_o_change_nonsevere_postpub == TRUE)),
+   6, 10, nrow(filter(dat, no_change_postcomp == TRUE & no_change_postpub == TRUE)),
+   6, 11, nrow(filter(dat, no_change_postcomp == TRUE & no_postpub_phase == TRUE)),
+   7,  8, nrow(filter(dat, no_postcomp_phase == TRUE & p_o_change_severe_postpub == TRUE)),
+   7,  9, nrow(filter(dat, no_postcomp_phase == TRUE & p_o_change_nonsevere_postpub == TRUE)),
+   7, 10, nrow(filter(dat, no_postcomp_phase == TRUE & no_change_postpub == TRUE)),
+   7, 11, nrow(filter(dat, no_postcomp_phase == TRUE & no_postpub_phase == TRUE)) #,
+  
+  #  8, 12, nrow(filter(dat, p_o_change_severe_postpub == TRUE & p_o_change_severe_reg_pub == TRUE)),
+  #  8, 13, nrow(filter(dat, p_o_change_severe_postpub == TRUE & p_o_change_nonsevere_reg_pub == TRUE)),
+  #  8, 14, nrow(filter(dat, p_o_change_severe_postpub == TRUE & no_change_reg_pub == TRUE)),
+  #  9, 12, nrow(filter(dat, p_o_change_nonsevere_postpub == TRUE & p_o_change_severe_reg_pub == TRUE)),
+  #  9, 13, nrow(filter(dat, p_o_change_nonsevere_postpub == TRUE & p_o_change_nonsevere_reg_pub == TRUE)),
+  #  9, 14, nrow(filter(dat, p_o_change_nonsevere_postpub == TRUE & no_change_reg_pub == TRUE)),
+  # 10, 12, nrow(filter(dat, no_change_postpub == TRUE & p_o_change_severe_reg_pub == TRUE)),
+  # 10, 13, nrow(filter(dat, no_change_postpub == TRUE & p_o_change_nonsevere_reg_pub == TRUE)),
+  # 10, 14, nrow(filter(dat, no_change_postpub == TRUE & no_change_reg_pub == TRUE)),
+  # 11, 12, nrow(filter(dat, no_postpub_phase == TRUE & p_o_change_severe_reg_pub == TRUE)),
+  # 11, 13, nrow(filter(dat, no_postpub_phase == TRUE & p_o_change_nonsevere_reg_pub == TRUE)),
+  # 11, 14, nrow(filter(dat, no_postpub_phase == TRUE & no_change_reg_pub == TRUE))
+  
+) %>%
+  filter(value != 0)
+
+Figure_X <- sankeyNetwork(
+  Links = dat_Sankey_links,
+  Nodes = dat_Sankey_nodes,
+  Source = 'source',
+  Target = 'target',
+  Value = 'value',
+  NodeID = 'name',
+  NodeGroup = 'name_type',
+  fontSize = 15,
+  nodeWidth = 30
+  # colourScale=ColourScal, nodeWidth=40, nodePadding=20
+)
+Figure_X
 
 ## Figure 3: UpSet plot for any changes in the sample of 300
 ## transform links into list column of intersection sets
