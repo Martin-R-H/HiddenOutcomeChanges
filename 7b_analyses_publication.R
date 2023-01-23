@@ -502,6 +502,76 @@ CI_no_change_reg_pub_freq <-
 
 
 
+## ---- RESEARCH QUESTION 3 (Addendum )-----------------------------------------
+
+## For reporting in the publication, these are some additional analyses based on
+## the sample of 300 trials for which the publications were manually assessed.
+
+## changes ONLY within the registry, but NOT between latest registry entry and
+## publication (i.e., trials with ONLY hidden changes)
+n_hidden_changes <- sum(
+  dat$p_o_change_reg_pub == FALSE & dat$p_o_change_anywithin == TRUE,
+  na.rm = TRUE
+)
+p_hidden_changes <- n_hidden_changes / sum(dat$has_publication_rating)*100
+CI_hidden_changes <-
+  binom.bayes(n_hidden_changes, sum(dat$has_publication_rating)) # multiply with 100
+CI_hidden_changes_freq <-
+  binom.test(n_hidden_changes, sum(dat$has_publication_rating))$conf.int*100
+## also calculate numbers for major and minor changes
+n_hidden_changes_severe <- sum(
+  dat$p_o_change_reg_pub == FALSE & dat$p_o_change_severe_anywithin == TRUE,
+  na.rm = TRUE
+)
+n_hidden_changes_nonsevere <- sum(
+  dat$p_o_change_reg_pub == FALSE & dat$p_o_change_nonsevere_anywithin == TRUE,
+  na.rm = TRUE
+)
+
+## changes ONLY between latest registry entry and publication, but NOT within
+## the registry
+n_only_reg_pub <- sum(
+  dat$p_o_change_reg_pub == TRUE & dat$p_o_change_anywithin == FALSE,
+  na.rm = TRUE
+)
+p_only_reg_pub <- n_only_reg_pub / sum(dat$has_publication_rating)*100
+CI_only_reg_pub <-
+  binom.bayes(n_only_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+CI_only_reg_pub_freq <-
+  binom.test(n_only_reg_pub, sum(dat$has_publication_rating))$conf.int*100
+## also calculate numbers for major and minor changes
+n_only_reg_pub_severe <- sum(
+  dat$p_o_change_severe_reg_pub == TRUE & dat$p_o_change_anywithin == FALSE,
+  na.rm = TRUE
+)
+n_only_reg_pub_nonsevere <- sum(
+  dat$p_o_change_nonsevere_reg_pub == TRUE & dat$p_o_change_anywithin == FALSE,
+  na.rm = TRUE
+)
+
+## changes between latest registry entry and publication, AND additionally
+## within the registry
+n_within_and_reg_pub <- sum(
+  dat$p_o_change_reg_pub == TRUE & dat$p_o_change_anywithin == TRUE,
+  na.rm = TRUE
+)
+p_within_and_reg_pub <- n_within_and_reg_pub / sum(dat$has_publication_rating)*100
+CI_within_and_reg_pub <-
+  binom.bayes(n_within_and_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+CI_within_and_reg_pub_freq <-
+  binom.test(n_within_and_reg_pub, sum(dat$has_publication_rating))$conf.int*100
+## also calculate numbers for major and minor changes
+n_within_and_reg_pub_severe <- sum(
+  dat$p_o_change_severe_reg_pub == TRUE & dat$p_o_change_anywithin == TRUE,
+  na.rm = TRUE
+)
+n_within_and_reg_pub <- sum(
+  dat$p_o_change_nonsevere_reg_pub == TRUE & dat$p_o_change_anywithin == TRUE,
+  na.rm = TRUE
+)
+
+
+
 ## ---- RESEARCH QUESTION 3 (Figures 3, S1 and S2) -----------------------------
 
 ## Figure 3:
