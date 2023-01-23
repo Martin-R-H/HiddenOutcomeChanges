@@ -432,11 +432,15 @@ model_RQ2_freq <- glm(
   data = dat
 )
 summary(model_RQ2_freq)
+
 ## for interpretability, get the exponentiated coefficients, which transformes
 ## them into odds rations
 ## to do this, it is sometimes helpful to turn off scientific notation in R
 ## using options(scipen=999)
 exp(coef(model_RQ2_freq))
+## retrieve the confidence intervals for the Odds Ratios - but is this necessary,
+## since this is no sample?
+exp(confint(model_RQ2_freq))
 ## the finalfit package automatically creates a table with frequencies and means
 explanatory <- c(
   'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
@@ -934,6 +938,8 @@ summary(model_RQ4_freq)
 ## to do this, it is sometimes helpful to turn off scientific notation in R
 ## using options(scipen=999)
 exp(coef(model_RQ4_freq))
+## retrieve the confidence intervals for the Odds Ratios
+exp(confint(model_RQ4_freq))
 ## the finalfit package automatically creates a table with frequencies and means
 explanatory <- c(
   'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
@@ -973,8 +979,6 @@ exp(coef(model_RQ5_freq)) # options(scipen=999)
 explanatory <- 'p_o_change_anywithin'
 dependent <- 'p_o_change_reg_pub'
 table_RQ5_freq <- finalfit(dat_pub, dependent, explanatory)
-## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
-hltest(model_RQ5_freq)
 
 
 
