@@ -607,6 +607,8 @@ rm(
   dat_ratings_wh_addendum_1, dat_ratings_wh_addendum_2, dat_ratings_wh_addendum_3
 )
 
+
+
 ## ---- read and merge registry-publication ratings ----
 
 ## read in the dataframes from Numbat
@@ -663,6 +665,39 @@ dat_merged_full <- dat_merged_full %>%
     has_publication_rating, .before = reviewer_comment
   )
 rm(dat_ratings_pub)
+
+
+
+## ---- exclude non adequate publication from registry-publication ratings ----
+dat_check <- dat_merged_full %>%
+  filter(has_publication_rating == TRUE) %>%
+  filter(str_detect(reviewer_comment, regex('exclude', ignore_case = TRUE))) %>%
+  select(
+    id,
+    reviewer_comment
+  )
+
+## the following trials are marked 'to be excluded' for the publication ratings:
+## NCT00575588
+## NCT00915252
+## NCT01035242
+## NCT01259739
+## NCT01812291
+## NCT02051660
+## NCT03042429 ('not a prospective trial')
+## NCT01916408
+
+## filter these trials by setting 'has publication rating' to false
+dat_merged_full <- dat_merged_full %>%
+  mutate(
+    has_publication_rating = if_else(
+      id == 'NCT00575588' | id == 'NCT00915252' | id == 'NCT01035242' |
+        id == 'NCT01259739' | id == 'NCT01812291' | id == 'NCT02051660' |
+        id == 'NCT03042429' | id == 'NCT01916408',
+      FALSE,
+      has_publication_rating
+    )
+  )
 
 
 ## ---- save the analysis file ----
