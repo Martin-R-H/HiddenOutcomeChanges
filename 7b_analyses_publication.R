@@ -290,6 +290,10 @@ test_that(
   'In the post-publication phase, do trials with changes, with no changes and where the phase does not exist add up?',
   expect_equal(n_any_postpub + n_no_phase_postpub + n_no_change_postpub, nrow(dat))
 )
+test_that(
+  'For any of the phases, do trials with changes, with no changes and where the phase does not exist add up?',
+  expect_equal(n_any_any + n_no_phase_any + n_no_change_any, nrow(dat))
+)
 
 
 
@@ -503,6 +507,18 @@ CI_no_change_reg_pub <-
   binom.bayes(n_no_change_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
 CI_no_change_reg_pub_freq <-
   binom.test(n_no_change_reg_pub, sum(dat$has_publication_rating))$conf.int*100
+
+## run some tests
+test_that(
+  'Between registry and publication, do trials with changes, with no changes and where the phase does not exist add up?',
+  expect_equal(n_any_reg_pub + n_no_change_reg_pub, nrow(filter(dat, has_publication_rating == TRUE)))
+)
+# --> one missing trials, but why? find the trial:
+dat_checkup <- dat %>%
+  filter(has_publication_rating == TRUE) %>%
+  filter(p_o_change_reg_pub == FALSE & no_change_reg_pub == FALSE)
+# NCT00660179 is just excluded for spin according to comment, so we might have
+# to fix the rating... (Martin Holst and Samruddhi)
 
 
 
