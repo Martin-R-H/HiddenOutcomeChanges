@@ -169,7 +169,7 @@ recode_outcomes_nonsevere_1 <- function(x) {
     
     p_o_change_nonsevere_c_rec = case_when(
       # p_o_change_severe_rec == FALSE &
-      # this line of code would make the categories mutually exclusive
+      # this line of code would make the 'severity' categories mutually exclusive
         (change_a_i_change_measurement == '1' |
            change_a_i_change_aggregation == '1' |
            change_a_i_change_timing == '1') ~
@@ -179,7 +179,7 @@ recode_outcomes_nonsevere_1 <- function(x) {
     
     p_o_change_nonsevere_c_postcomp = case_when(
       # p_o_change_severe_postcomp == FALSE &
-      # this line of code would make the categories mutually exclusive
+      # this line of code would make the 'severity' categories mutually exclusive
         (change_i_p_change_measurement == '1' |
            change_i_p_change_aggregation == '1' |
            change_i_p_change_timing == '1') ~
@@ -189,7 +189,7 @@ recode_outcomes_nonsevere_1 <- function(x) {
     
     p_o_change_nonsevere_c_postpub = case_when(
       # p_o_change_severe_postpub == FALSE &
-      # this line of code would make the categories mutually exclusive
+      # this line of code would make the 'severity' categories mutually exclusive
         (change_p_l_change_measurement == '1' |
            change_p_l_change_aggregation == '1' |
            change_p_l_change_timing == '1') ~
@@ -198,9 +198,11 @@ recode_outcomes_nonsevere_1 <- function(x) {
     ),
     
     p_o_change_nonsevere_c_anywithin = if_else(
-      p_o_change_nonsevere_c_rec == TRUE |
-        p_o_change_nonsevere_c_postcomp == TRUE |
-        p_o_change_nonsevere_c_postpub == TRUE,
+      # p_o_change_severe_anywithin == FALSE &
+      # this line of code would make the 'severity' categories mutually exclusive
+        (p_o_change_nonsevere_c_rec == TRUE |
+           p_o_change_nonsevere_c_postcomp == TRUE |
+           p_o_change_nonsevere_c_postpub == TRUE),
       TRUE,
       FALSE
     ),
@@ -208,7 +210,7 @@ recode_outcomes_nonsevere_1 <- function(x) {
     p_o_change_nonsevere_c_reg_pub = case_when(
       has_publication_rating == TRUE &
         # p_o_change_severe_reg_pub == FALSE &
-        # this line of code would make the categories mutually exclusive
+        # this line of code would make the 'severity' categories mutually exclusive
         (pub_outcome_change_change_measurement == '1' |
            pub_outcome_change_change_aggregation == '1' |
            pub_outcome_change_change_timing == '1') ~
@@ -235,7 +237,7 @@ recode_outcomes_nonsevere_2 <- function(x) {
     
     p_o_change_nonsevere_ao_rec = case_when(
       # p_o_change_severe_rec == FALSE & p_o_change_nonsevere_c_rec == FALSE &
-      # this line of code would make the categories mutually exclusive
+      # this line of code would make the 'severity' categories mutually exclusive
         (change_a_i_added_measurement == '1' |
            change_a_i_added_aggregation == '1'|
            change_a_i_added_timing == '1' |
@@ -248,7 +250,7 @@ recode_outcomes_nonsevere_2 <- function(x) {
     
     p_o_change_nonsevere_ao_postcomp = case_when(
       # p_o_change_severe_postcomp == FALSE & p_o_change_nonsevere_c_postcomp == FALSE &
-      # this line of code would make the categories mutually exclusive
+      # this line of code would make the 'severity' categories mutually exclusive
         (change_i_p_added_measurement == '1' |
            change_i_p_added_aggregation == '1'|
            change_i_p_added_timing == '1' |
@@ -261,7 +263,7 @@ recode_outcomes_nonsevere_2 <- function(x) {
     
     p_o_change_nonsevere_ao_postpub = case_when(
       # p_o_change_severe_postpub == FALSE & p_o_change_nonsevere_c_postpub == FALSE &
-      # this line of code would make the categories mutually exclusive
+      # this line of code would make the 'severity' categories mutually exclusive
         (change_p_l_added_measurement == '1' |
            change_p_l_added_aggregation == '1'|
            change_p_l_added_timing == '1' |
@@ -273,9 +275,11 @@ recode_outcomes_nonsevere_2 <- function(x) {
     ),
     
     p_o_change_nonsevere_ao_anywithin = if_else(
-      p_o_change_nonsevere_ao_rec == TRUE |
+      # p_o_change_severe_anywithin == FALSE & p_o_change_nonsevere_c_anywithin == FALSE &
+      # this line of code would make the 'severity' categories mutually exclusive
+        (p_o_change_nonsevere_ao_rec == TRUE |
         p_o_change_nonsevere_ao_postcomp == TRUE |
-        p_o_change_nonsevere_ao_postpub == TRUE,
+        p_o_change_nonsevere_ao_postpub == TRUE),
       TRUE,
       FALSE
     ),
@@ -283,7 +287,7 @@ recode_outcomes_nonsevere_2 <- function(x) {
     p_o_change_nonsevere_ao_reg_pub = case_when(
       has_publication_rating == TRUE &
         # p_o_change_severe_reg_pub == FALSE & p_o_change_nonsevere_c_reg_pub == FALSE &
-        # this line of code would make the categories mutually exclusive
+        # this line of code would make the 'severity' categories mutually exclusive
         (pub_outcome_change_added_measurement == '1' |
            pub_outcome_change_added_aggregation == '1'|
            pub_outcome_change_added_timing == '1' |
@@ -329,9 +333,11 @@ recode_outcomes_nonsevere_3 <- function(x) {
     ),
     
     p_o_change_nonsevere_anywithin = if_else(
-      p_o_change_nonsevere_rec == TRUE |
-        p_o_change_nonsevere_postcomp == TRUE |
-        p_o_change_nonsevere_postpub == TRUE,
+      # p_o_change_severe_anywithin == FALSE &
+      # this line of code would make the 'severity' categories mutually exclusive
+        (p_o_change_nonsevere_rec == TRUE |
+           p_o_change_nonsevere_postcomp == TRUE |
+           p_o_change_nonsevere_postpub == TRUE),
       TRUE,
       FALSE
     ),
@@ -421,7 +427,16 @@ recode_outcomes_nophase <- function(x) {
     ),
     
     no_change_anywithin = if_else(
-      no_change_rec == TRUE & no_change_postcomp == TRUE & no_change_postpub == TRUE,
+      # to define 'no change' for the aggregated version, which pertains to 'no
+      # change at any of the within-history timepoints, we also include cases in 
+      # which some of the phases did not exist
+      (no_change_rec == TRUE & no_change_postcomp == TRUE & no_change_postpub == TRUE) |
+        (no_rec_phase == TRUE & no_change_postcomp == TRUE & no_change_postpub == TRUE) |
+        (no_change_rec == TRUE & no_postcomp_phase == TRUE & no_change_postpub == TRUE) |
+        (no_change_rec == TRUE & no_change_postcomp == TRUE & no_postpub_phase == TRUE) |
+        (no_rec_phase == TRUE & no_postcomp_phase == TRUE & no_change_postpub == TRUE) |
+        (no_rec_phase == TRUE & no_change_postcomp == TRUE & no_postpub_phase == TRUE) |
+        (no_change_rec == TRUE & no_postcomp_phase == TRUE & no_postpub_phase == TRUE),
       TRUE,
       FALSE
     ),
