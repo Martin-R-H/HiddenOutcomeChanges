@@ -695,6 +695,94 @@ Figure_X <- sankeyNetwork(
 )
 Figure_X
 
+## Figure Y: Alternate Sankey plot for changes in the sample of 300
+dat_SankeyY_nodes <- tribble(
+  ~name, ~name_type,
+  'Major (Within-Registry)', 'major',      # 0
+  'Minor (Within-Registry)', 'minor',      # 1
+  'No Changes (Within-Registry)', 'no_change',              # 2
+  'No Information', 'no_phase',                 # 3
+  'Major (Registry vs Publication)', 'major', # 4
+  'Minor (Registry vs Publication)', 'minor', # 5
+  'No Change (Registry vs Publication)', 'no_change'          # 6
+)
+
+dat_SankeyY_links <- tribble(
+  
+  ~source, ~target, ~value,
+  ## ATTENTION! NUMBERS NOT MUTUALLY EXCLUSIVE, SO THEY ADD UP TO 311!
+  
+  0,  4, nrow(filter(dat, p_o_change_severe_anywithin == TRUE & p_o_change_severe_reg_pub == TRUE)),
+  0,  5, nrow(filter(dat, p_o_change_severe_anywithin == TRUE & p_o_change_nonsevere_reg_pub == TRUE)),
+  0,  6, nrow(filter(dat, p_o_change_severe_anywithin == TRUE & no_change_reg_pub == TRUE)),
+  1,  4, nrow(filter(dat, p_o_change_nonsevere_anywithin == TRUE & p_o_change_severe_reg_pub == TRUE)),
+  1,  5, nrow(filter(dat, p_o_change_nonsevere_anywithin == TRUE & p_o_change_nonsevere_reg_pub == TRUE)),
+  1,  6, nrow(filter(dat, p_o_change_nonsevere_anywithin == TRUE & no_change_reg_pub == TRUE)),
+  2,  4, nrow(filter(dat, no_change_anywithin == TRUE & p_o_change_severe_reg_pub == TRUE)),
+  2,  5, nrow(filter(dat, no_change_anywithin == TRUE & p_o_change_nonsevere_reg_pub == TRUE)),
+  2,  6, nrow(filter(dat, no_change_anywithin == TRUE & no_change_reg_pub == TRUE)),
+  3,  4, nrow(filter(dat, no_anywithin_phase == TRUE & p_o_change_severe_reg_pub == TRUE)),
+  3,  5, nrow(filter(dat, no_anywithin_phase == TRUE & p_o_change_nonsevere_reg_pub == TRUE)),
+  3,  6, nrow(filter(dat, no_anywithin_phase == TRUE & no_change_reg_pub == TRUE))
+  
+) %>%
+  filter(value != 0)
+
+Figure_Y <- sankeyNetwork(
+  Links = dat_SankeyY_links,
+  Nodes = dat_SankeyY_nodes,
+  Source = 'source',
+  Target = 'target',
+  Value = 'value',
+  NodeID = 'name',
+  NodeGroup = 'name_type',
+  fontSize = 15,
+  nodeWidth = 30
+  # colourScale=ColourScal, nodeWidth=40, nodePadding=20
+)
+Figure_Y
+
+## Sankey - Alternative 2
+test <- dat_pub %>%
+  mutate(
+    within_reg_change_type = case_when(
+      p_o_change_severe_anywithin == TRUE ~ 'major',
+      p_o_change_severe_anywithin == FALSE & p_o_change_nonsevere_anywithin == TRUE ~ 'minor',
+      p_o_change_severe_anywithin == FALSE & p_o_change_nonsevere_anywithin == FALSE & no_change_anywithin == TRUE ~ 'no change',
+      no_anywithin_phase == TRUE ~ 'no information'
+    )
+  ) %>%
+  mutate(
+    reg_pub_change_type = case_when(
+      p_o_change_severe_reg_pub == TRUE ~ 'major',
+      p_o_change_severe_reg_pub == FALSE & p_o_change_nonsevere_reg_pub == TRUE ~ 'minor',
+      p_o_change_severe_reg_pub == FALSE & p_o_change_nonsevere_reg_pub == FALSE & no_change_reg_pub == TRUE ~ 'no change'
+    )
+  )
+
+library(ggsankey)
+test2 <- test %>%
+  make_long(within_reg_change_type, reg_pub_change_type) %>%
+  filter(!is.na(node)) # NAs are problem
+
+FigureY2 <- ggplot(
+  test2,
+  aes(
+    x = x, 
+    next_x = next_x, 
+    node = node, 
+    next_node = next_node,
+    fill = factor(node),
+    label = node
+  )
+) +
+  geom_sankey() +
+  geom_sankey_label() +
+  theme_sankey(base_size = 16)
+FigureY2
+
+
+
 ## Figure 3: UpSet plot for any changes in the sample of 300
 ## transform links into list column of intersection sets
 links <-  dat_pub %>%
