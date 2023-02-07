@@ -21,7 +21,7 @@ dat <- read_csv(
 
 
 
-## ---- PREPARE DATA: CALCULATE OUTCOME CHANGE VARIABLES -----------------------
+## ---- PREPARE DATA: Calculate Outcome Change Variables -----------------------
 
 source('fun/recode_outcome_changes.R')
 
@@ -50,7 +50,6 @@ dat <- dat %>%
 dat <- dat %>%
   recode_outcomes_nonsevere_2()
 
-
 ## 'non-severe' changes: any
 dat <- dat %>%
   recode_outcomes_nonsevere_3()
@@ -71,7 +70,7 @@ dat <- dat %>%
 
 
 
-## ---- PREPARE DATA: CALCULATE REGRESSION VARIABLES ---------------------------
+## ---- PREPARE DATA: Calculate Regression Variables ---------------------------
 
 ## recode the phase variable
 dat <- dat %>%
@@ -104,7 +103,7 @@ dat <- dat %>%
   ) %>%
   relocate(intervention_type_recoded, .after = intervention_type)
 
-## add the multicenter variable
+## add the enrollment and multicenter variables
 dat_IV_add <- read_csv('data/data_IntoValue_included.csv') %>%
   select(
     c(id, enrollment, is_multicentric)
@@ -146,8 +145,7 @@ dat <- dat %>%
   ) %>%
   mutate(
     journal_name_matching = str_replace(journal_name_matching, 'bmj(?![:blank:])', 'bmj, the'),
-    journal_name_matching = str_replace(journal_name_matching, 'jama(?![:blank:]\\w)', 'jama journal of the american medical association')#,
-    # journal_name_matching = str_replace(journal_name_matching, 'jama(?![:blank:]\\w)', 'jama journal of the american medical association'),
+    journal_name_matching = str_replace(journal_name_matching, 'jama(?![:blank:]\\w)', 'jama journal of the american medical association')
   ) # to make sure they journal names properly match
 
 ## join the data
@@ -180,12 +178,15 @@ dat <- dat %>%
   categorisefields()
 
 
-## ---- RESEARCH QUESTION 1 ----------------------------------------------------
+## ---- OBJECTIVE 1: Within-Registry Discrepancies -----------------------------
 
 ## Based on all registry changes in all RCTs in the dataset:
-## We will determine the proportion of ‘within-registry’ outcome changes
-## in published clinical trials across key trial phases (active, inactive,
-## published).
+## How often are changes of primary outcomes of clinical trials reported in
+## clinical trial registries, across all available registry entry versions
+## (“within-registry discrepancies”)? We will determine the proportions across
+## key trial phases.
+
+## (Equal to Research Question 1 from the preregistered protocol.)
 
 ## calculate the relevant numbers and proportions
 
@@ -297,220 +298,64 @@ test_that(
 
 
 
-## ---- RESEARCH QUESTION 1 (Figure 2) -----------------------------------------
-
-## ATTENTION: Possibly obsolete.
-
-## Figure 2:
-## What are the changes that happen within the registry across study phases?
-## To show this more concisely, we do a stacked bar chart for change types
-## across time points.
-
-dat_Figure2 <- tribble(
-
-  ~Phase,             ~Type,                              ~Percentage,
-
-  'recruitment',      'major discrepancy',                p_severe_rec,
-  'recruitment',      'minor disc.: change',              p_nonsevere_c_rec,
-  'recruitment',      'minor disc.: addition/ommission',  p_nonsevere_ao_rec,
-  'recruitment',      'phase does not exist',             p_no_phase_rec,
-# 'recruitment',      'no change',                        p_no_change_rec,
-
-  'post-completion',  'major discrepancy',                p_severe_postcomp,
-  'post-completion',  'minor disc.: change',              p_nonsevere_c_postcomp,
-  'post-completion',  'minor disc.: addition/ommission',  p_nonsevere_ao_postcomp,
-  'post-completion',  'phase does not exist',             p_no_phase_postcomp,
-# 'post-completion',  'no change',                        p_no_change_postcomp,
-
-  'post-publication', 'major discrepancy',                p_severe_postpub,
-  'post-publication', 'minor disc.: change',              p_nonsevere_c_postpub,
-  'post-publication', 'minor disc.: addition/ommission',  p_nonsevere_ao_postpub,
-  'post-publication', 'phase does not exist',             p_no_phase_postpub #,
-# 'post-publication', 'no change',                        p_no_change_postpub
-
-) %>%
-  mutate(phase = factor(Phase)) %>%
-  mutate(
-    Phase = fct_relevel(Phase, 'post-publication', 'post-completion', 'recruitment')
-  ) %>%
-  mutate(
-    Type = factor(Type)
-  ) %>%
-  mutate(
-    Type = fct_relevel(
-      Type,
-      'major discrepancy',
-      'minor disc.: change',
-      'minor disc.: addition/ommission'
-    )
-  )
-
-Figure2 <- ggplot(dat_Figure2) +
-  aes(
-    x = Phase,
-    y = Percentage,
-    fill = Type
-  ) +
-  geom_bar(position = 'stack', stat = 'identity') +
-  coord_flip() + # we  use this to make it horizontal
-  scale_fill_manual(values = c('#994455', '#997700', '#EECC66', '#CCCCCC')) +
-  theme(panel.background=element_rect(fill = "white", colour = "lightgrey"),
-        panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"),
-        panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) +
-  theme(legend.position = 'bottom')
-Figure2
-
-# ggsave("Figure2.pdf",
-#        Figure2,
-#        scale = 1.25,
-#        width = 7,
-#        height = 5
-# )
-
-
-
-## ---- RESEARCH QUESTION 2 ----------------------------------------------------
-
-## Based on all registry changes in all RCTs in the dataset:
-## We will assess the association of ‘within-registry’ outcome changes with key
-## candidate predictors (listed below).
-## Candidate predictors to be used in the exploratory logistic regression
-## analysis include study phase, industry sponsorship, publication year, medical
-## specialty, registry, multicenter trial. We will carefully justify the
-## selection of variables and give precise definitions before starting our
-## analysis. We will use descriptive statistics where appropriate.
-
-## the model will be estimated with a generalised linear model (logistic
-## regression)
-
-## bayesian model
-# model_RQ2 <- brm(
-#   as.numeric(p_o_change_anywithin) ~
-#     phase_recoded +
-#     main_sponsor +
-#     publication_year +
-#     registration_year +
-#     medical_field_recoded +
-#     # medical_field_recoded_binary +
-#     registry +
-#     is_multicentric +
-#     enrollment +
-#     intervention_type_recoded,
-#   family="binomial",
-#   data = dat,
-#   cores = getOption('mc.cores', 2),
-#   seed = 227 # I again asked Siri for a number between 1 and 999
-# )
-# summary(model_RQ2)
-
-## see what priors the model used
-# get_prior(
-#   as.numeric(p_o_change_anywithin) ~
-#     phase_recoded +
-#     main_sponsor +
-#     publication_year +
-#     registration_year +
-#     medical_field_recoded +
-#     # medical_field_recoded_binary +
-#     registry +
-#     is_multicentric +
-#     enrollment +
-#     intervention_type_recoded,
-#   family="binomial",
-#   data = dat
-# )
-
-## frequentist model
-model_RQ2_freq <- glm(
-  p_o_change_anywithin ~
-    phase_recoded +
-    main_sponsor +
-    publication_year +
-    registration_year +
-    medical_field_recoded +
-    registry +
-    is_multicentric +
-    enrollment +
-    intervention_type_recoded,
-  family="binomial",
-  data = dat
-)
-summary(model_RQ2_freq)
-
-## for interpretability, get the exponentiated coefficients, which transformes
-## them into odds rations
-## to do this, it is sometimes helpful to turn off scientific notation in R
-## using options(scipen=999)
-exp(coef(model_RQ2_freq))
-## retrieve the confidence intervals for the Odds Ratios - but is this necessary,
-## since this is no sample?
-exp(confint(model_RQ2_freq))
-## the finalfit package automatically creates a table with frequencies and means
-explanatory <- c(
-  'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
-)
-dependent <- 'p_o_change_anywithin'
-table_RQ2_freq <- finalfit(dat, dependent, explanatory)
-## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
-hltest(model_RQ2_freq)
-
-
-
-## ---- RESEARCH QUESTION 3 ----------------------------------------------------
+## ---- OBJECTIVE 2: Registry-Publication Discrepancies ------------------------
 
 ## Based on publications:
-## We will determine the proportion of ‘classical’ outcome switching (i.e., if
-## the primary outcome reported in the publication deviates from the one
-## reported in the latest version of the preregistration before publication).
+## How often are there discrepancies between the latest registry entry and the
+## results publication (registry-publication discrepancies, i.e., if the primary
+## outcome reported in the publication deviates from the one reported in the
+## latest version of the preregistration before publication).
+
+## (Equal to Research Question 3 from the preregistered protocol.)
 
 ## calculate the respective proportions
 
 ## any changes between latest registry entry and publication
 n_any_reg_pub <- sum(dat$p_o_change_reg_pub, na.rm = T)
 p_any_reg_pub <- sum(dat$p_o_change_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
-CI_any_reg_pub <-
-  binom.bayes(n_any_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+  # CI_any_reg_pub <-
+  #   binom.bayes(n_any_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
 CI_any_reg_pub_freq <-
   binom.test(n_any_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## severe changes between latest registry entry and publication
 n_severe_reg_pub <- sum(dat$p_o_change_severe_reg_pub, na.rm = T)
 p_severe_reg_pub <- sum(dat$p_o_change_severe_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
-CI_severe_reg_pub <-
-  binom.bayes(n_severe_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+  # CI_severe_reg_pub <-
+  #   binom.bayes(n_severe_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
 CI_severe_reg_pub_freq <-
   binom.test(n_severe_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## non-severe changes between latest registry entry and publication
 n_nonsevere_reg_pub <- sum(dat$p_o_change_nonsevere_reg_pub, na.rm = T)
 p_nonsevere_reg_pub <- sum(dat$p_o_change_nonsevere_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
-CI_nonsevere_reg_pub <-
-  binom.bayes(n_nonsevere_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+  # CI_nonsevere_reg_pub <-
+  #   binom.bayes(n_nonsevere_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
 CI_nonsevere_reg_pub_freq <-
   binom.test(n_nonsevere_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## non-severe changes (changes) between latest registry entry and publication
 n_nonsevere_c_reg_pub <- sum(dat$p_o_change_nonsevere_c_reg_pub, na.rm = T)
 p_nonsevere_c_reg_pub <- sum(dat$p_o_change_nonsevere_c_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
-CI_nonsevere_c_reg_pub <-
-  binom.bayes(n_nonsevere_c_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+  # CI_nonsevere_c_reg_pub <-
+  #   binom.bayes(n_nonsevere_c_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
 CI_nonsevere_c_reg_pub_freq <-
   binom.test(n_nonsevere_c_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## non-severe changes (additions or omissions) between latest registry entry and publication
 n_nonsevere_ao_reg_pub <- sum(dat$p_o_change_nonsevere_ao_reg_pub, na.rm = T)
 p_nonsevere_ao_reg_pub <- sum(dat$p_o_change_nonsevere_ao_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
-CI_nonsevere_ao_reg_pub <-
-  binom.bayes(n_nonsevere_ao_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+  # CI_nonsevere_ao_reg_pub <-
+  #   binom.bayes(n_nonsevere_ao_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
 CI_nonsevere_ao_reg_pub_freq <-
   binom.test(n_nonsevere_ao_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## no changes between latest registry entry and publication
 n_no_change_reg_pub <- sum(dat$no_change_reg_pub, na.rm = T)
 p_no_change_reg_pub<- sum(dat$no_change_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
-CI_no_change_reg_pub <-
-  binom.bayes(n_no_change_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+  # CI_no_change_reg_pub <-
+  #   binom.bayes(n_no_change_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
 CI_no_change_reg_pub_freq <-
   binom.test(n_no_change_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 
 ## run some tests
 test_that(
-  'Between registry and publication, do trials with changes, with no changes and where the phase does not exist add up?',
+  'Between registry and publication, do trials with changes and with no changes add up?',
   expect_equal(n_any_reg_pub + n_no_change_reg_pub, nrow(filter(dat, has_publication_rating == TRUE)))
 )
 # --> one missing trials, but why? find the trial:
@@ -522,10 +367,12 @@ dat_checkup <- dat %>%
 
 
 
-## ---- RESEARCH QUESTION 3 (Addendum )-----------------------------------------
+## ---- OBJECTIVE 3: Hidden Changes --------------------------------------------
 
-## For reporting in the publication, these are some additional analyses based on
-## the sample of 300 trials for which the publications were manually assessed.
+## Based on publications:
+## How many changes are “hidden” behind the latest registry entry, i.e., are
+## “within-registry”, but do not show up as “registry-publication discrepancies”
+## and are therefore easily missed in review?
 
 ## changes ONLY within the registry, but NOT between latest registry entry and
 ## publication (i.e., trials with ONLY hidden changes)
@@ -534,8 +381,8 @@ n_hidden_changes <- sum(
   na.rm = TRUE
 )
 p_hidden_changes <- n_hidden_changes / sum(dat$has_publication_rating)*100
-CI_hidden_changes <-
-  binom.bayes(n_hidden_changes, sum(dat$has_publication_rating)) # multiply with 100
+  # CI_hidden_changes <-
+  #   binom.bayes(n_hidden_changes, sum(dat$has_publication_rating)) # multiply with 100
 CI_hidden_changes_freq <-
   binom.test(n_hidden_changes, sum(dat$has_publication_rating))$conf.int*100
 ## also calculate numbers for major and minor changes
@@ -555,8 +402,8 @@ n_only_reg_pub <- sum(
   na.rm = TRUE
 )
 p_only_reg_pub <- n_only_reg_pub / sum(dat$has_publication_rating)*100
-CI_only_reg_pub <-
-  binom.bayes(n_only_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+  # CI_only_reg_pub <-
+  #   binom.bayes(n_only_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
 CI_only_reg_pub_freq <-
   binom.test(n_only_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## also calculate numbers for major and minor changes
@@ -576,8 +423,8 @@ n_within_and_reg_pub <- sum(
   na.rm = TRUE
 )
 p_within_and_reg_pub <- n_within_and_reg_pub / sum(dat$has_publication_rating)*100
-CI_within_and_reg_pub <-
-  binom.bayes(n_within_and_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
+  # CI_within_and_reg_pub <-
+  #   binom.bayes(n_within_and_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
 CI_within_and_reg_pub_freq <-
   binom.test(n_within_and_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## also calculate numbers for major and minor changes
@@ -585,14 +432,28 @@ n_within_and_reg_pub_severe <- sum(
   dat$p_o_change_severe_reg_pub == TRUE & dat$p_o_change_anywithin == TRUE,
   na.rm = TRUE
 )
-n_within_and_reg_pub <- sum(
+n_within_and_reg_pub_nonsevere <- sum(
   dat$p_o_change_nonsevere_reg_pub == TRUE & dat$p_o_change_anywithin == TRUE,
   na.rm = TRUE
 )
 
+## changes neither between latest registry entry and publication, nor within the
+## registry
+n_neither_nor <- sum(
+  dat$p_o_change_reg_pub == FALSE & dat$p_o_change_anywithin == FALSE,
+  na.rm = TRUE
+)
+p_neither_nor <- n_neither_nor / sum(dat$has_publication_rating)*100
+
+## run a test
+test_that(
+  'Does every trial with a rated publication fall in one of the categories?',
+  expect_equal(n_hidden_changes + n_only_reg_pub + n_within_and_reg_pub + n_neither_nor, nrow(filter(dat, has_publication_rating == TRUE)))
+)
 
 
-## ---- RESEARCH QUESTION 3 (Figures 3, S1 and S2) -----------------------------
+
+## ---- OBJECTIVE 3: Figures 3, S1 and S2 --------------------------------------
 
 ## Figure 3:
 ## What are the pathways of changes that happen within the registry across study
@@ -600,9 +461,6 @@ n_within_and_reg_pub <- sum(
 ## As a more comprehensive assessment of when changes are made - especially
 ## keeping in mind the possibility of changes at multiple time points -, we do
 ## an Upset Plot for changes for the published trials.
-## OPEN QUESTION:
-## See Figure 1 from the protocol - maybe we need a more thorough assessment
-## of pathways throughout a study when doing the Upset plot?
 
 dat_pub <- dat %>%
   filter(has_publication_rating == TRUE)
@@ -972,16 +830,187 @@ FigureS2
 
 
 
-## ---- RESEARCH QUESTION 4 ----------------------------------------------------
+## ---- OBJECTIVE 4: Reporting -------------------------------------------------
 
 ## Based on publications:
-## We will assess the association of ‘classical’ outcome switching with key
+## We will determine the proportion of trials with transparent reporting of
+## “within-registry” changes and “classical” outcome changes in the publication.
+## How often both types of outcome changes are transparently reported in the
+## results publications.
+## (Equal to Research Questions 6 and 7 from the preregistered protocol.)
+
+
+## (1) Reporting of within-registry discrepancies!
+
+## How many trials with severe within-registry changes report changes?
+dat_pub <- dat_pub %>%
+  mutate(
+    reporting_severe_anywithin = if_else(
+      p_o_change_severe_anywithin == TRUE & pub_outcome_reference_binary == "1",
+      TRUE,
+      FALSE
+    )
+  )
+n_reporting_severe_anywithin <- sum(dat_pub$reporting_severe_anywithin, na.rm = TRUE)
+n_severe_anywithin_sample <- sum(dat_pub$p_o_change_severe_anywithin, na.rm = TRUE)
+p_reporting_severe_anywithin <- n_reporting_severe_anywithin / n_severe_anywithin_sample * 100
+  # CI_reporting_severe_anywithin <-
+  #   binom.bayes(n_reporting_severe_anywithin, n_severe_anywithin_sample) # multiply with 100
+CI_reporting_severe_anywithin_freq <-
+  binom.test(n_reporting_severe_anywithin, n_severe_anywithin_sample)$conf.int*100
+
+## How many trials with *any* within-registry changes report changes?
+dat_pub <- dat_pub %>%
+  mutate(
+    reporting_any_anywithin = if_else(
+      p_o_change_anywithin == TRUE & pub_outcome_reference_binary == "1",
+      TRUE,
+      FALSE
+    )
+  )
+n_reporting_any_anywithin <- sum(dat_pub$reporting_any_anywithin, na.rm = TRUE)
+n_any_anywithin_sample <- sum(dat_pub$p_o_change_anywithin, na.rm = TRUE)
+p_reporting_any_anywithin <- n_reporting_any_anywithin / n_any_anywithin_sample * 100
+  # CI_reporting_any_anywithin <-
+  #   binom.bayes(n_reporting_any_anywithin, n_any_anywithin_sample) # multiply with 100
+CI_reporting_any_anywithin_freq <-
+  binom.test(n_reporting_any_anywithin, n_any_anywithin_sample)$conf.int*100
+
+
+## (2) Reporting of registry-publication discrepancies!
+
+## How many trials with severe registry-publication changes report changes?
+dat_pub <- dat_pub %>%
+  mutate(
+    reporting_severe_reg_pub = if_else(
+      p_o_change_severe_reg_pub == TRUE & pub_outcome_reference_binary == "1",
+      TRUE,
+      FALSE
+    )
+  )
+n_reporting_severe_reg_pub <- sum(dat_pub$reporting_severe_reg_pub, na.rm = TRUE)
+n_severe_reg_pub_sample <- sum(dat_pub$p_o_change_severe_reg_pub, na.rm = TRUE)
+p_reporting_severe_reg_pub <- n_reporting_severe_reg_pub / n_severe_reg_pub_sample * 100
+  # CI_reporting_severe_reg_pub <-
+  #   binom.bayes(n_reporting_severe_reg_pub, n_severe_reg_pub_sample) # multiply with 100
+CI_reporting_severe_reg_pub_freq <-
+  binom.test(n_reporting_severe_reg_pub, n_severe_reg_pub_sample)$conf.int*100
+
+## How many trials with any registry-publication changes report changes?
+dat_pub <- dat_pub %>%
+  mutate(
+    reporting_any_reg_pub = if_else(
+      p_o_change_reg_pub == TRUE & pub_outcome_reference_binary == "1",
+      TRUE,
+      FALSE
+    )
+  )
+n_reporting_any_reg_pub <- sum(dat_pub$reporting_any_reg_pub, na.rm = TRUE)
+n_any_reg_pub_sample <- sum(dat_pub$p_o_change_reg_pub, na.rm = TRUE)
+p_reporting_any_reg_pub <- n_reporting_any_reg_pub / n_any_reg_pub_sample * 100
+  # CI_reporting_any_reg_pub  <-
+  #   binom.bayes(n_reporting_any_reg_pub, n_any_reg_pub_sample) # multiply with 100
+CI_reporting_any_reg_pub_freq <-
+  binom.test(n_reporting_any_reg_pub, n_any_reg_pub_sample)$conf.int*100
+
+
+
+## ---- OBJECTIVE 5: Associations, Within-Registry -----------------------------
+
+## Based on all registry changes in all RCTs in the dataset:
+## Which trial characteristics are associated with these reporting deficits? We
+## will assess the association of ‘within-registry’ outcome changes with key
 ## candidate predictors (listed below).
-## Listed below is: Candidate predictors to be used in the exploratory logistic
-## regression analysis include study phase, industry sponsorship, publication
-## year, medical specialty, registry, multicenter trial. We will carefully
-## justify the selection of variables and give precise definitions before
-## starting our analysis. We will use descriptive statistics where appropriate.
+
+## (Equal to Research Question 2 from the preregistered protocol.)
+
+## the model will be estimated with a generalised linear model (logistic
+## regression)
+
+## bayesian model
+# model_RQ2 <- brm(
+#   as.numeric(p_o_change_anywithin) ~
+#     phase_recoded +
+#     main_sponsor +
+#     publication_year +
+#     registration_year +
+#     medical_field_recoded +
+#     # medical_field_recoded_binary +
+#     registry +
+#     is_multicentric +
+#     enrollment +
+#     intervention_type_recoded,
+#   family="binomial",
+#   data = dat,
+#   cores = getOption('mc.cores', 2),
+#   seed = 227 # I again asked Siri for a number between 1 and 999
+# )
+# summary(model_RQ2)
+
+## see what priors the model used
+# get_prior(
+#   as.numeric(p_o_change_anywithin) ~
+#     phase_recoded +
+#     main_sponsor +
+#     publication_year +
+#     registration_year +
+#     medical_field_recoded +
+#     # medical_field_recoded_binary +
+#     registry +
+#     is_multicentric +
+#     enrollment +
+#     intervention_type_recoded,
+#   family="binomial",
+#   data = dat
+# )
+
+## frequentist model
+model_RQ2_freq <- glm(
+  p_o_change_anywithin ~
+    phase_recoded +
+    main_sponsor +
+    publication_year +
+    registration_year +
+    medical_field_recoded +
+    registry +
+    is_multicentric +
+    enrollment +
+    intervention_type_recoded,
+  family="binomial",
+  data = dat
+)
+summary(model_RQ2_freq)
+
+## for interpretability, get the exponentiated coefficients, which transformes
+## them into odds rations
+## to do this, it is sometimes helpful to turn off scientific notation in R
+## using options(scipen=999)
+exp(coef(model_RQ2_freq))
+## retrieve the confidence intervals for the Odds Ratios - but is this necessary,
+## since this is no sample?
+exp(confint(model_RQ2_freq))
+## the finalfit package automatically creates a table with frequencies and means
+explanatory <- c(
+  'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
+)
+dependent <- 'p_o_change_anywithin'
+table_RQ2_freq <- finalfit(dat, dependent, explanatory)
+## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
+hltest(model_RQ2_freq)
+
+
+
+## ---- OBJECTIVE 5: Associations, Registry-Publication ------------------------
+
+## Based on publications:
+## Which trial characteristics are associated with these reporting deficits? We
+## will assess the association of ‘registry-publication’ outcome discrepancies
+## (‘classical’ outcome switching) with key candidate predictors (listed below).
+## (Equal to Research Question 4 from the preregistered protocol.)
+
+## the model will be estimated with a generalised linear model (logistic
+## regression)
+
 
 ## bayesian model
 # model_RQ4 <- brm(
@@ -1028,7 +1057,6 @@ model_RQ4_freq <- glm(
     publication_year +
     registration_year +
     medical_field_recoded +
-    # medical_field_recoded_binary +
     registry +
     is_multicentric +
     enrollment +
@@ -1055,11 +1083,12 @@ hltest(model_RQ4_freq)
 
 
 
-## ---- RESEARCH QUESTION 5 ----------------------------------------------------
+## ---- OBJECTIVE 5: Associations, Cross-Over ----------------------------------
 
 ## Based on publications:
 ## We will assess the association between ‘within-registry’ outcome switching
 ## and ‘classical’ outcome switching.
+## (Equal to Research Question 5 from the preregistered protocol.)
 
 # ## bayesian model
 # model_RQ5 <- brm(
@@ -1083,87 +1112,3 @@ exp(coef(model_RQ5_freq)) # options(scipen=999)
 explanatory <- 'p_o_change_anywithin'
 dependent <- 'p_o_change_reg_pub'
 table_RQ5_freq <- finalfit(dat_pub, dependent, explanatory)
-
-
-
-## ---- RESEARCH QUESTION 6 ----------------------------------------------------
-
-## Based on publications:
-## We will determine the proportion of trials with transparent reporting of
-## “within-registry” changes in the publication.
-
-## How many trials with severe within-registry changes report changes?
-dat_pub <- dat_pub %>%
-  mutate(
-    reporting_severe_anywithin = if_else(
-      p_o_change_severe_anywithin == TRUE & pub_outcome_reference_binary == "1",
-      TRUE,
-      FALSE
-    )
-  )
-n_reporting_severe_anywithin <- sum(dat_pub$reporting_severe_anywithin, na.rm = TRUE)
-n_severe_anywithin_sample <- sum(dat_pub$p_o_change_severe_anywithin, na.rm = TRUE)
-p_reporting_severe_anywithin <- n_reporting_severe_anywithin / n_severe_anywithin_sample * 100
-CI_reporting_severe_anywithin <-
-  binom.bayes(n_reporting_severe_anywithin, n_severe_anywithin_sample) # multiply with 100
-CI_reporting_severe_anywithin_freq <-
-  binom.test(n_reporting_severe_anywithin, n_severe_anywithin_sample)$conf.int*100
-
-## How many trials with *any* within-registry changes report changes?
-dat_pub <- dat_pub %>%
-  mutate(
-    reporting_any_anywithin = if_else(
-      p_o_change_anywithin == TRUE & pub_outcome_reference_binary == "1",
-      TRUE,
-      FALSE
-    )
-  )
-n_reporting_any_anywithin <- sum(dat_pub$reporting_any_anywithin, na.rm = TRUE)
-n_any_anywithin_sample <- sum(dat_pub$p_o_change_anywithin, na.rm = TRUE)
-p_reporting_any_anywithin <- n_reporting_any_anywithin / n_any_anywithin_sample * 100
-CI_reporting_any_anywithin <-
-  binom.bayes(n_reporting_any_anywithin, n_any_anywithin_sample) # multiply with 100
-CI_reporting_any_anywithin_freq <-
-  binom.test(n_reporting_any_anywithin, n_any_anywithin_sample)$conf.int*100
-
-
-
-## ---- RESEARCH QUESTION 7 ----------------------------------------------------
-
-## Based on publications:
-## We will determine the proportion of trials with transparent reporting of
-## “classical” outcome changes in the publication.
-
-## How many trials with severe registry-publication changes report changes?
-dat_pub <- dat_pub %>%
-  mutate(
-    reporting_severe_reg_pub = if_else(
-      p_o_change_severe_reg_pub == TRUE & pub_outcome_reference_binary == "1",
-      TRUE,
-      FALSE
-    )
-  )
-n_reporting_severe_reg_pub <- sum(dat_pub$reporting_severe_reg_pub, na.rm = TRUE)
-n_severe_reg_pub_sample <- sum(dat_pub$p_o_change_severe_reg_pub, na.rm = TRUE)
-p_reporting_severe_reg_pub <- n_reporting_severe_reg_pub / n_severe_reg_pub_sample * 100
-CI_reporting_severe_reg_pub <-
-  binom.bayes(n_reporting_severe_reg_pub, n_severe_reg_pub_sample) # multiply with 100
-CI_reporting_severe_reg_pub_freq <-
-  binom.test(n_reporting_severe_reg_pub, n_severe_reg_pub_sample)$conf.int*100
-
-## How many trials with any registry-publication changes report changes?
-dat_pub <- dat_pub %>%
-  mutate(
-    reporting_any_reg_pub = if_else(
-      p_o_change_reg_pub == TRUE & pub_outcome_reference_binary == "1",
-      TRUE,
-      FALSE
-    )
-  )
-n_reporting_any_reg_pub <- sum(dat_pub$reporting_any_reg_pub, na.rm = TRUE)
-n_any_reg_pub_sample <- sum(dat_pub$p_o_change_reg_pub, na.rm = TRUE)
-p_reporting_any_reg_pub <- n_reporting_any_reg_pub / n_any_reg_pub_sample * 100
-CI_reporting_any_reg_pub  <-
-  binom.bayes(n_reporting_any_reg_pub, n_any_reg_pub_sample) # multiply with 100
-CI_reporting_any_reg_pub_freq <-
-  binom.test(n_reporting_any_reg_pub, n_any_reg_pub_sample)$conf.int*100
