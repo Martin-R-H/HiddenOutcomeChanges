@@ -616,7 +616,7 @@ dat_ratings_pub_25 <- read_tsv(
   'http://numbat.bgcarlisle.com/fmetrics/export/2022-08-12_051025-form_3-refset_16-final.tsv'
 )
 dat_ratings_pub_275 <- read_tsv(
-  'http://numbat.bgcarlisle.com/fmetrics/export/2022-08-12_051103-form_3-refset_19-final.tsv'
+  'http://numbat.bgcarlisle.com/fmetrics/export/2023-02-07_125805-form_3-refset_19-final.tsv'
 ) %>% 
   mutate(
     pub_outcome_change_no_change = as.character(pub_outcome_change_no_change),

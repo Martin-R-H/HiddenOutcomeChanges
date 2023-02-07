@@ -358,12 +358,6 @@ test_that(
   'Between registry and publication, do trials with changes and with no changes add up?',
   expect_equal(n_any_reg_pub + n_no_change_reg_pub, nrow(filter(dat, has_publication_rating == TRUE)))
 )
-# --> one missing trials, but why? find the trial:
-dat_checkup <- dat %>%
-  filter(has_publication_rating == TRUE) %>%
-  filter(p_o_change_reg_pub == FALSE & no_change_reg_pub == FALSE)
-# NCT00660179 is just excluded for spin according to comment, so we might have
-# to fix the rating... (Martin Holst and Samruddhi)
 
 
 
