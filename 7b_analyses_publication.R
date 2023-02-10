@@ -1106,3 +1106,162 @@ exp(coef(model_RQ5_freq)) # options(scipen=999)
 explanatory <- 'p_o_change_anywithin'
 dependent <- 'p_o_change_reg_pub'
 table_RQ5_freq <- finalfit(dat_pub, dependent, explanatory)
+
+
+
+## ---- SENSITIVITY ANALYSIS ---------------------------------------------------
+
+## For a sensitivity analysis, do some of the publications-related analyses with
+## just the publications in which the outcome was explicitly names as such.
+
+## filter data
+dat_pub_sensitivity <- dat %>%
+  filter(
+    has_publication_rating == TRUE & outcome_determined == 'explicit'
+  )
+
+## SENSITIVITY ANALYSIS - OBJECTIVE 2
+
+## any changes between latest registry entry and publication
+n_any_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_reg_pub, na.rm = T)
+p_any_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_reg_pub, na.rm = T)/sum(dat_pub_sensitivity$has_publication_rating)*100
+CI_any_reg_pub_freq_SA <-
+  binom.test(n_any_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
+## severe changes between latest registry entry and publication
+n_severe_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_severe_reg_pub, na.rm = T)
+p_severe_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_severe_reg_pub, na.rm = T)/sum(dat_pub_sensitivity$has_publication_rating)*100
+CI_severe_reg_pub_freq_SA <-
+  binom.test(n_severe_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
+## non-severe changes between latest registry entry and publication
+n_nonsevere_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_nonsevere_reg_pub, na.rm = T)
+p_nonsevere_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_nonsevere_reg_pub, na.rm = T)/sum(dat_pub_sensitivity$has_publication_rating)*100
+CI_nonsevere_reg_pub_freq_SA <-
+  binom.test(n_nonsevere_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
+## non-severe changes (changes) between latest registry entry and publication
+n_nonsevere_c_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_nonsevere_c_reg_pub, na.rm = T)
+p_nonsevere_c_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_nonsevere_c_reg_pub, na.rm = T)/sum(dat_pub_sensitivity$has_publication_rating)*100
+CI_nonsevere_c_reg_pub_freq_SA <-
+  binom.test(n_nonsevere_c_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
+## non-severe changes (additions or omissions) between latest registry entry and publication
+n_nonsevere_ao_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_nonsevere_ao_reg_pub, na.rm = T)
+p_nonsevere_ao_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_nonsevere_ao_reg_pub, na.rm = T)/sum(dat_pub_sensitivity$has_publication_rating)*100
+CI_nonsevere_ao_reg_pub_freq_SA <-
+  binom.test(n_nonsevere_ao_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
+## no changes between latest registry entry and publication
+n_no_change_reg_pub_SA <- sum(dat_pub_sensitivity$no_change_reg_pub, na.rm = T)
+p_no_change_reg_pub_SA <- sum(dat_pub_sensitivity$no_change_reg_pub, na.rm = T)/sum(dat_pub_sensitivity$has_publication_rating)*100
+CI_no_change_reg_pub_freq_SA <-
+  binom.test(n_no_change_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
+
+## run some tests
+test_that(
+  'Between registry and publication, do trials with changes and with no changes add up?',
+  expect_equal(n_any_reg_pub_SA + n_no_change_reg_pub_SA, nrow(filter(dat_pub_sensitivity, has_publication_rating == TRUE)))
+)
+
+## SENSITIVITY ANALYSIS - OBJECTIVE 3
+
+## changes ONLY within the registry, but NOT between latest registry entry and
+## publication (i.e., trials with ONLY hidden changes)
+n_hidden_changes_SA <- sum(
+  dat_pub_sensitivity$p_o_change_reg_pub == FALSE & dat_pub_sensitivity$p_o_change_anywithin == TRUE,
+  na.rm = TRUE
+)
+p_hidden_changes_SA <- n_hidden_changes_SA / sum(dat_pub_sensitivity$has_publication_rating)*100
+CI_hidden_changes_freq_SA <-
+  binom.test(n_hidden_changes_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
+## also calculate numbers for major and minor changes
+n_hidden_changes_severe_SA <- sum(
+  dat_pub_sensitivity$p_o_change_reg_pub == FALSE & dat_pub_sensitivity$p_o_change_severe_anywithin == TRUE,
+  na.rm = TRUE
+)
+n_hidden_changes_nonsevere_SA <- sum(
+  dat_pub_sensitivity$p_o_change_reg_pub == FALSE & dat_pub_sensitivity$p_o_change_nonsevere_anywithin == TRUE,
+  na.rm = TRUE
+)
+
+## changes ONLY between latest registry entry and publication, but NOT within
+## the registry
+n_only_reg_pub_SA <- sum(
+  dat_pub_sensitivity$p_o_change_reg_pub == TRUE & dat_pub_sensitivity$p_o_change_anywithin == FALSE,
+  na.rm = TRUE
+)
+p_only_reg_pub_SA <- n_only_reg_pub_SA / sum(dat_pub_sensitivity$has_publication_rating)*100
+CI_only_reg_pub_freq_SA <-
+  binom.test(n_only_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
+## also calculate numbers for major and minor changes
+n_only_reg_pub_severe_SA <- sum(
+  dat_pub_sensitivity$p_o_change_severe_reg_pub == TRUE & dat_pub_sensitivity$p_o_change_anywithin == FALSE,
+  na.rm = TRUE
+)
+n_only_reg_pub_nonsevere_SA <- sum(
+  dat_pub_sensitivity$p_o_change_nonsevere_reg_pub == TRUE & dat_pub_sensitivity$p_o_change_anywithin == FALSE,
+  na.rm = TRUE
+)
+
+## changes between latest registry entry and publication, AND additionally
+## within the registry
+n_within_and_reg_pub_SA <- sum(
+  dat_pub_sensitivity$p_o_change_reg_pub == TRUE & dat_pub_sensitivity$p_o_change_anywithin == TRUE,
+  na.rm = TRUE
+)
+p_within_and_reg_pub_SA <- n_within_and_reg_pub_SA / sum(dat_pub_sensitivity$has_publication_rating)*100
+CI_within_and_reg_pub_freq_SA <-
+  binom.test(n_within_and_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
+## also calculate numbers for major and minor changes
+n_within_and_reg_pub_severe_SA <- sum(
+  dat_pub_sensitivity$p_o_change_severe_reg_pub == TRUE & dat_pub_sensitivity$p_o_change_anywithin == TRUE,
+  na.rm = TRUE
+)
+n_within_and_reg_pub_nonsevere_SA <- sum(
+  dat_pub_sensitivity$p_o_change_nonsevere_reg_pub == TRUE & dat_pub_sensitivity$p_o_change_anywithin == TRUE,
+  na.rm = TRUE
+)
+
+## changes neither between latest registry entry and publication, nor within the
+## registry
+n_neither_nor_SA <- sum(
+  dat_pub_sensitivity$p_o_change_reg_pub == FALSE & dat_pub_sensitivity$p_o_change_anywithin == FALSE,
+  na.rm = TRUE
+)
+p_neither_nor_SA <- n_neither_nor_SA / sum(dat_pub_sensitivity$has_publication_rating)*100
+
+## all types of changes combined
+n_hidden_and_overt_SA <- n_hidden_changes_SA + n_only_reg_pub_SA + n_within_and_reg_pub_SA
+p_hidden_and_overt_SA <- n_hidden_and_overt_SA / sum(dat_pub_sensitivity$has_publication_rating)*100
+CI_hidden_and_overt_freq_SA <-
+  binom.test(n_hidden_and_overt_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
+
+## SENSITIVITY ANALYSIS - OBJECTIVE 5
+
+## frequentist model
+model_RQ4_freq_SA <- glm(
+  p_o_change_reg_pub ~
+    phase_recoded +
+    main_sponsor +
+    publication_year +
+    registration_year +
+    medical_field_recoded +
+    registry +
+    is_multicentric +
+    enrollment +
+    intervention_type_recoded,
+  family="binomial",
+  data = dat_pub_sensitivity
+)
+summary(model_RQ4_freq_SA)
+## for interpretability, get the exponentiated coefficients, which transformes
+## them into odds rations
+## to do this, it is sometimes helpful to turn off scientific notation in R
+## using options(scipen=999)
+exp(coef(model_RQ4_freq_SA))
+## retrieve the confidence intervals for the Odds Ratios
+exp(confint(model_RQ4_freq_SA))
+## the finalfit package automatically creates a table with frequencies and means
+explanatory <- c(
+  'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
+)
+dependent <- 'p_o_change_reg_pub'
+table_RQ4_freq_SA <- finalfit(dat_pub_sensitivity, dependent, explanatory)
+## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
+hltest(model_RQ4_freq_SA)
