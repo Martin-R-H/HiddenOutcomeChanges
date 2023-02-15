@@ -112,7 +112,7 @@ dat <- dat %>%
   left_join(
     dat_IV_add, by = 'id'
   ) %>%
-  relocate(enrollment, .after = phase) %>%
+  relocate(enrollment, .after = phase_recoded) %>%
   relocate(is_multicentric, .after = allocation)
 rm(dat_IV_add)
 
@@ -347,7 +347,7 @@ CI_nonsevere_ao_reg_pub_freq <-
   binom.test(n_nonsevere_ao_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## no changes between latest registry entry and publication
 n_no_change_reg_pub <- sum(dat$no_change_reg_pub, na.rm = T)
-p_no_change_reg_pub<- sum(dat$no_change_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
+p_no_change_reg_pub <- sum(dat$no_change_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
   # CI_no_change_reg_pub <-
   #   binom.bayes(n_no_change_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
 CI_no_change_reg_pub_freq <-
@@ -384,10 +384,12 @@ n_hidden_changes_severe <- sum(
   dat$p_o_change_reg_pub == FALSE & dat$p_o_change_severe_anywithin == TRUE,
   na.rm = TRUE
 )
+p_hidden_changes_severe <- n_hidden_changes_severe / sum(dat$has_publication_rating)*100
 n_hidden_changes_nonsevere <- sum(
   dat$p_o_change_reg_pub == FALSE & dat$p_o_change_nonsevere_anywithin == TRUE,
   na.rm = TRUE
 )
+p_hidden_changes_nonsevere <- n_hidden_changes_nonsevere / sum(dat$has_publication_rating)*100
 
 ## changes ONLY between latest registry entry and publication, but NOT within
 ## the registry
@@ -405,10 +407,12 @@ n_only_reg_pub_severe <- sum(
   dat$p_o_change_severe_reg_pub == TRUE & dat$p_o_change_anywithin == FALSE,
   na.rm = TRUE
 )
+p_only_reg_pub_severe <- n_only_reg_pub_severe / sum(dat$has_publication_rating)*100
 n_only_reg_pub_nonsevere <- sum(
   dat$p_o_change_nonsevere_reg_pub == TRUE & dat$p_o_change_anywithin == FALSE,
   na.rm = TRUE
 )
+p_only_reg_pub_nonsevere <- n_only_reg_pub_nonsevere / sum(dat$has_publication_rating)*100
 
 ## changes between latest registry entry and publication, AND additionally
 ## within the registry
@@ -426,10 +430,12 @@ n_within_and_reg_pub_severe <- sum(
   dat$p_o_change_severe_reg_pub == TRUE & dat$p_o_change_anywithin == TRUE,
   na.rm = TRUE
 )
+p_within_and_reg_pub_severe <- n_within_and_reg_pub_severe / sum(dat$has_publication_rating)*100
 n_within_and_reg_pub_nonsevere <- sum(
   dat$p_o_change_nonsevere_reg_pub == TRUE & dat$p_o_change_anywithin == TRUE,
   na.rm = TRUE
 )
+p_within_and_reg_pub_nonsevere <- n_within_and_reg_pub_nonsevere / sum(dat$has_publication_rating)*100
 
 ## changes neither between latest registry entry and publication, nor within the
 ## registry
@@ -438,6 +444,14 @@ n_neither_nor <- sum(
   na.rm = TRUE
 )
 p_neither_nor <- n_neither_nor / sum(dat$has_publication_rating)*100
+
+## all types of changes combined
+n_hidden_and_overt <- n_hidden_changes + n_only_reg_pub + n_within_and_reg_pub
+p_hidden_and_overt <- n_hidden_and_overt / sum(dat$has_publication_rating)*100
+# CI_hidden_and_overt <-
+#   binom.bayes(n_hidden_and_overt, sum(dat$has_publication_rating)) # multiply with 100
+CI_hidden_and_overt_freq <-
+  binom.test(n_hidden_and_overt, sum(dat$has_publication_rating))$conf.int*100
 
 ## run a test
 test_that(
