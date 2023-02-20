@@ -1182,3 +1182,23 @@ table_RQ4_SA <- finalfit(dat_pub_sensitivity, dependent, explanatory)
 ## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
 hltest(model_RQ4_SA)
 
+
+
+## ---- SAVE FINAL DATASET -----------------------------------------------------
+
+dat_final <- dat %>%
+  relocate(registry:is_publication_5y, .after=id) %>%
+  relocate(rater_comment_add_rec:rater_comment_add_postpub, .after=rater_comment) %>%
+  relocate(has_medical_field, .before=medical_field) %>%
+  relocate(has_medical_field:medical_field_recoded, .after=is_publication_5y) %>%
+  select(
+    -referenceid,
+    -change_a_i_points_to_results,
+    -change_i_p_points_to_results,
+    -change_p_l_points_to_results,
+    -journal_name_matching
+  )
+
+dat_final %>% write_csv(
+  'data/ASCERTAIN_Dataset_final.csv'
+)
