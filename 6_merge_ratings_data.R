@@ -14,7 +14,8 @@ dat <- read_csv('data/processed_history_data_short.csv')
 
 ## read in the dataframe from Numbat
 dat_ratings_wh <- read_tsv(
-  'http://numbat.bgcarlisle.com/fmetrics/export/2022-10-11_073641-form_2-refset_9-final.tsv'
+  'data/2022-10-11_073641-form_2-refset_9-final.tsv'
+  # 'http://numbat.bgcarlisle.com/fmetrics/export/2022-10-11_073641-form_2-refset_9-final.tsv' # original download link
 ) %>%
   select(
     c(
@@ -225,7 +226,8 @@ rm(dat, dat_missings,dat_ratings_wh, dat_ratings_wh_UNMATCHED)
 
 ## read in the dataframe from Numbat
 dat_ratings_wh_addendum <- read_tsv(
-  'http://numbat.bgcarlisle.com/fmetrics/export/2022-08-12_050830-form_4-refset_18-final.tsv'
+  'data/2022-08-12_050830-form_4-refset_18-final.tsv'
+  # 'http://numbat.bgcarlisle.com/fmetrics/export/2022-08-12_050830-form_4-refset_18-final.tsv' # original download link
 ) %>%
   select(
     trial_id,
@@ -613,10 +615,12 @@ rm(
 
 ## read in the dataframes from Numbat
 dat_ratings_pub_25 <- read_tsv(
-  'http://numbat.bgcarlisle.com/fmetrics/export/2022-08-12_051025-form_3-refset_16-final.tsv'
+  'data/2022-08-12_051025-form_3-refset_16-final.tsv'
+  # 'http://numbat.bgcarlisle.com/fmetrics/export/2022-08-12_051025-form_3-refset_16-final.tsv' # original download link
 )
 dat_ratings_pub_275 <- read_tsv(
-  'http://numbat.bgcarlisle.com/fmetrics/export/2023-02-07_125805-form_3-refset_19-final.tsv'
+  'data/2023-02-07_125805-form_3-refset_19-final.tsv'
+  # 'http://numbat.bgcarlisle.com/fmetrics/export/2023-02-07_125805-form_3-refset_19-final.tsv' # original download link
 ) %>% 
   mutate(
     pub_outcome_change_no_change = as.character(pub_outcome_change_no_change),
