@@ -1,8 +1,8 @@
 library(tidyverse)
 library(lubridate)
 library(binom)
-library(ggupset)
 library(networkD3) # for Sankey plot
+library(UpSetR) # for UpSet plot
 library(brms)
 library(finalfit)
 library(glmtoolbox)
@@ -461,20 +461,19 @@ test_that(
 
 
 
-## ---- OBJECTIVE 3: Figures 3, S1 and S2 --------------------------------------
+## ---- OBJECTIVE 3: Figure 3 (Sankey Plot) ------------------------------------
 
-## Figure 3:
 ## What are the pathways of changes that happen within the registry across study
 ## phases?
 ## As a more comprehensive assessment of when changes are made - especially
 ## keeping in mind the possibility of changes at multiple time points -, we do
-## an Upset Plot for changes for the published trials.
+## a Sankey Plot for changes for the published trials.
 
 dat_pub <- dat %>%
   filter(has_publication_rating == TRUE)
 
-## Figure X: Sankey plot for changes in the sample of 300
-dat_Sankey_nodes <- tribble(
+## Figure 3: Sankey plot for changes in the sample of 300
+dat_Figure3_nodes <- tribble(
   ~name, ~name_type,
   'Major (Start vs Completion)', 'major',      # 0
   'Minor (Start vs Completion)', 'minor',      # 1
@@ -493,7 +492,7 @@ dat_Sankey_nodes <- tribble(
   # 'No Change (Latest vs Paper)', 'no_change'          # 14
 )
 
-dat_Sankey_links <- tribble(
+dat_Figure3_links <- tribble(
   
   ~source, ~target, ~value,
   
@@ -547,9 +546,9 @@ dat_Sankey_links <- tribble(
 ) %>%
   filter(value != 0)
 
-Figure_X <- sankeyNetwork(
-  Links = dat_Sankey_links,
-  Nodes = dat_Sankey_nodes,
+Figure3 <- sankeyNetwork(
+  Links = dat_Figure3_links,
+  Nodes = dat_Figure3_nodes,
   Source = 'source',
   Target = 'target',
   Value = 'value',
@@ -559,282 +558,260 @@ Figure_X <- sankeyNetwork(
   nodeWidth = 30
   # colourScale=ColourScal, nodeWidth=40, nodePadding=20
 )
-Figure_X
-
-## Figure Y: Alternate Sankey plot for changes in the sample of 300
-dat_SankeyY_nodes <- tribble(
-  ~name, ~name_type,
-  'Major (Within-Registry)', 'major',      # 0
-  'Minor (Within-Registry)', 'minor',      # 1
-  'No Changes (Within-Registry)', 'no_change',              # 2
-  'No Information', 'no_phase',                 # 3
-  'Major (Registry vs Publication)', 'major', # 4
-  'Minor (Registry vs Publication)', 'minor', # 5
-  'No Change (Registry vs Publication)', 'no_change'          # 6
-)
-
-dat_SankeyY_links <- tribble(
-  
-  ~source, ~target, ~value,
-  ## ATTENTION! NUMBERS NOT MUTUALLY EXCLUSIVE, SO THEY ADD UP TO 311!
-  
-  0,  4, nrow(filter(dat, p_o_change_severe_anywithin == TRUE & p_o_change_severe_reg_pub == TRUE)),
-  0,  5, nrow(filter(dat, p_o_change_severe_anywithin == TRUE & p_o_change_nonsevere_reg_pub == TRUE)),
-  0,  6, nrow(filter(dat, p_o_change_severe_anywithin == TRUE & no_change_reg_pub == TRUE)),
-  1,  4, nrow(filter(dat, p_o_change_nonsevere_anywithin == TRUE & p_o_change_severe_reg_pub == TRUE)),
-  1,  5, nrow(filter(dat, p_o_change_nonsevere_anywithin == TRUE & p_o_change_nonsevere_reg_pub == TRUE)),
-  1,  6, nrow(filter(dat, p_o_change_nonsevere_anywithin == TRUE & no_change_reg_pub == TRUE)),
-  2,  4, nrow(filter(dat, no_change_anywithin == TRUE & p_o_change_severe_reg_pub == TRUE)),
-  2,  5, nrow(filter(dat, no_change_anywithin == TRUE & p_o_change_nonsevere_reg_pub == TRUE)),
-  2,  6, nrow(filter(dat, no_change_anywithin == TRUE & no_change_reg_pub == TRUE)),
-  3,  4, nrow(filter(dat, no_anywithin_phase == TRUE & p_o_change_severe_reg_pub == TRUE)),
-  3,  5, nrow(filter(dat, no_anywithin_phase == TRUE & p_o_change_nonsevere_reg_pub == TRUE)),
-  3,  6, nrow(filter(dat, no_anywithin_phase == TRUE & no_change_reg_pub == TRUE))
-  
-) %>%
-  filter(value != 0)
-
-Figure_Y <- sankeyNetwork(
-  Links = dat_SankeyY_links,
-  Nodes = dat_SankeyY_nodes,
-  Source = 'source',
-  Target = 'target',
-  Value = 'value',
-  NodeID = 'name',
-  NodeGroup = 'name_type',
-  fontSize = 15,
-  nodeWidth = 30
-  # colourScale=ColourScal, nodeWidth=40, nodePadding=20
-)
-Figure_Y
-
-## Sankey - Alternative 2
-test <- dat_pub %>%
-  mutate(
-    within_reg_change_type = case_when(
-      p_o_change_severe_anywithin == TRUE ~ 'major',
-      p_o_change_severe_anywithin == FALSE & p_o_change_nonsevere_anywithin == TRUE ~ 'minor',
-      p_o_change_severe_anywithin == FALSE & p_o_change_nonsevere_anywithin == FALSE & no_change_anywithin == TRUE ~ 'no change',
-      no_anywithin_phase == TRUE ~ 'no information'
-    )
-  ) %>%
-  mutate(
-    reg_pub_change_type = case_when(
-      p_o_change_severe_reg_pub == TRUE ~ 'major',
-      p_o_change_severe_reg_pub == FALSE & p_o_change_nonsevere_reg_pub == TRUE ~ 'minor',
-      p_o_change_severe_reg_pub == FALSE & p_o_change_nonsevere_reg_pub == FALSE & no_change_reg_pub == TRUE ~ 'no change'
-    )
-  )
-
-library(ggsankey)
-test2 <- test %>%
-  make_long(within_reg_change_type, reg_pub_change_type) %>%
-  filter(!is.na(node)) # NAs are problem
-
-FigureY2 <- ggplot(
-  test2,
-  aes(
-    x = x, 
-    next_x = next_x, 
-    node = node, 
-    next_node = next_node,
-    fill = factor(node),
-    label = node
-  )
-) +
-  geom_sankey() +
-  geom_sankey_label() +
-  theme_sankey(base_size = 16)
-FigureY2
+Figure3
 
 
 
-## Figure 3: UpSet plot for any changes in the sample of 300
-## transform links into list column of intersection sets
-links <-  dat_pub %>%
+## ---- OBJECTIVE 3: Figures 4, S1 & S2 (UpSet Plots) --------------------------
+
+## What are the pathways of changes that happen within the registry across study
+## phases?
+## As a more comprehensive assessment of when changes are made - especially
+## keeping in mind the possibility of changes at multiple time points -, we do
+##Upset Plots for any changes in the sample of 300.
+
+## reshape the dataset to create the UpSet Plots
+UpSet_links <-  dat_pub %>%
   select(
     id,
     p_o_change_rec,
     p_o_change_postcomp,
     p_o_change_postpub,
-    p_o_change_reg_pub
-  ) %>%
-  rename(
-    "Start Date - Completion Date" = p_o_change_rec,
-    "Completion Date - Publication Date" = p_o_change_postcomp,
-    "Publication Date - Latest Entry" = p_o_change_postpub,
-    "Latest Entry - Paper" = p_o_change_reg_pub
-  ) %>%
-  pivot_longer(cols = -id, names_to = "link") %>%
-  filter(value == TRUE) %>%
-  group_by(id) %>%
-  mutate(links = list(link)) %>%
-  ungroup() %>%
-  select(-value, -link) %>%
-  distinct()
-
-# prepare trials without links
-# create dummy links list column
-no_links <- dat_pub %>%
-  filter(!(id %in% links$id)) %>%
-  select(id) %>%
-  mutate(links = list(NULL))
-
-dat_Figure3 <- bind_rows(links, no_links)
-rm(links, no_links)
-
-Figure3 <- dat_Figure3 %>%
-  ggplot(aes(x=links, colour = NULL)) +
-  geom_bar(aes(y = (..count..)/sum(..count..))) +
-  scale_x_upset(
-    sets = c(
-      'Latest Entry - Paper',
-      'Publication Date - Latest Entry',
-      'Completion Date - Publication Date',
-      'Start Date - Completion Date'
-    )
-  ) +
-  scale_y_continuous(labels = scales::percent, limits = c(0,0.8)) +
-  theme(panel.background=element_rect(fill = "white", colour = "lightgrey"),
-        panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"),
-        panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) +
-  # theme_combmatrix(
-  #   combmatrix.panel.point.color.fill = c('#994455', '#997700', '#EECC66', '#CCCCCC')
-  # ) +
-  # I do not think it is actually possible to assign different colours to different sets
-  ylab("Proportion of trials") +
-  xlab('Any outcome changes across multiple time points') # +
-# ggtitle(label = '"Less severe" primary outcome changes', subtitle = 'Sample of 300 registry entries and trial results publications')
-Figure3
-
-# ggsave('Figure3.pdf',
-#        Figure3,
-#        scale = 1.25,
-#        width = 7,
-#        height = 5
-# )
-
-## Figure S1: severe changes in the sample of 300
-links <- dat_pub %>%
-  select(
-    id,
+    p_o_change_reg_pub,
     p_o_change_severe_rec,
     p_o_change_severe_postcomp,
     p_o_change_severe_postpub,
-    p_o_change_severe_reg_pub
-  ) %>%
-  rename(
-    "Start - Completion" = p_o_change_severe_rec,
-    "Completion - Publication" = p_o_change_severe_postcomp,
-    "Publication - Latest Entry" = p_o_change_severe_postpub,
-    "Latest Entry - Paper" = p_o_change_severe_reg_pub
-  ) %>%
-  pivot_longer(cols = -id, names_to = "link") %>%
-  filter(value == TRUE) %>%
-  group_by(id) %>%
-  mutate(links = list(link)) %>%
-  ungroup() %>%
-  select(-value, -link) %>%
-  distinct()
-
-# Prepare trials without links
-# Create dummy links list column
-no_links <- dat_pub %>%
-  filter(!(id %in% links$id)) %>%
-  select(id) %>%
-  mutate(links = list(NULL))
-
-dat_FigureS1 <- bind_rows(links, no_links)
-rm(links, no_links)
-
-FigureS1 <- dat_FigureS1 %>%
-  ggplot(aes(x=links)) +
-  geom_bar(aes(y = (..count..)/sum(..count..))) +
-  scale_x_upset(
-    sets = c(
-      'Latest Entry - Paper',
-      'Publication - Latest Entry',
-      'Completion - Publication',
-      'Start - Completion'
-    )
-  ) +
-  scale_y_continuous(labels = scales::percent, limits = c(0,0.8)) +
-  theme(panel.background=element_rect(fill = "white", colour = "lightgrey"),
-        panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"),
-        panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) +
-  ylab("Proportion of trials") +
-  xlab('Major discrepancies across multiple time points') #+
-# ggtitle(label = "Major discrepancies in outcomes", subtitle = 'Sample of 300 registry entries and trial results publications')
-FigureS1
-
-# ggsave("FigureS1.pdf",
-#        FigureS1,
-#        scale = 1.25,
-#        width = 7,
-#        height = 5
-# )
-
-## Figure S2: UpSet plot for non-severe changes in the sample of 300
-# Transform links into list column of intersection sets
-links <- dat_pub %>%
-  select(
-    id,
+    p_o_change_severe_reg_pub,
     p_o_change_nonsevere_rec,
     p_o_change_nonsevere_postcomp,
     p_o_change_nonsevere_postpub,
     p_o_change_nonsevere_reg_pub
   ) %>%
-  rename(
-    "Start - Completion" = p_o_change_nonsevere_rec,
-    "Completion - Publication" = p_o_change_nonsevere_postcomp,
-    "Publication - Latest Entry" = p_o_change_nonsevere_postpub,
-    "Latest Entry - Paper" = p_o_change_nonsevere_reg_pub
-  ) %>%
-  pivot_longer(cols = -id, names_to = "link") %>%
-  filter(value == TRUE) %>%
-  group_by(id) %>%
-  mutate(links = list(link)) %>%
-  ungroup() %>%
-  select(-value, -link) %>%
-  distinct()
-
-# Prepare trials without links
-# Create dummy links list column
-no_links <-
-  dat_pub %>%
-  filter(!(id %in% links$id)) %>%
-  select(id) %>%
-  mutate(links = list(NULL))
-
-dat_FigureS2 <- bind_rows(links, no_links)
-rm(links, no_links)
-
-FigureS2 <- dat_FigureS2 %>%
-  ggplot(aes(x=links, colour = NULL)) +
-  geom_bar(aes(y = (..count..)/sum(..count..))) +
-  scale_x_upset(
-    sets = c(
-      'Latest Entry - Paper',
-      'Publication - Latest Entry',
-      'Completion - Publication',
-      'Start - Completion'
+  mutate(
+    p_o_change_rec_alt = if_else(
+      p_o_change_rec == TRUE,
+      id,
+      'NA'
     )
-  ) +
-  scale_y_continuous(labels = scales::percent, limits = c(0,0.8)) +
-  theme(panel.background=element_rect(fill = "white", colour = "lightgrey"),
-        panel.grid.major=element_line(colour="lightgrey", linetype = "dotted"),
-        panel.grid.minor=element_line(colour="lightgrey", linetype = "dotted")) +
-  ylab("Proportion of trials") +
-  xlab('Minor discrepancies across multiple time points') # +
-# ggtitle(label = 'Minor discrepancies in primary outcomes', subtitle = 'Sample of 300 registry entries and trial results publications')
-FigureS2
+  ) %>%
+  mutate(
+    p_o_change_postcomp_alt = if_else(
+      p_o_change_postcomp == TRUE,
+      id,
+      'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_postpub_alt = if_else(
+      p_o_change_postpub == TRUE,
+      id,
+      'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_reg_pub_alt = if_else(
+      p_o_change_reg_pub == TRUE,
+      id,
+      'NA'
+    )
+  )%>%
+  mutate(
+    p_o_change_severe_rec_alt = if_else(
+      p_o_change_severe_rec == TRUE,
+      id,
+      'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_severe_postcomp_alt = if_else(
+      p_o_change_severe_postcomp == TRUE,
+      id,
+      'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_severe_postpub_alt = if_else(
+      p_o_change_severe_postpub == TRUE,
+      id,
+      'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_severe_reg_pub_alt = if_else(
+      p_o_change_severe_reg_pub == TRUE,
+      id,
+      'NA'
+    )
+  )%>%
+  mutate(
+    p_o_change_nonsevere_rec_alt = if_else(
+      p_o_change_nonsevere_rec == TRUE,
+      id,
+      'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_nonsevere_postcomp_alt = if_else(
+      p_o_change_nonsevere_postcomp == TRUE,
+      id,
+      'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_nonsevere_postpub_alt = if_else(
+      p_o_change_nonsevere_postpub == TRUE,
+      id,
+      'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_nonsevere_reg_pub_alt = if_else(
+      p_o_change_nonsevere_reg_pub == TRUE,
+      id,
+      'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_rec_alt = na_if(
+      p_o_change_rec_alt, 'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_postcomp_alt = na_if(
+      p_o_change_postcomp_alt, 'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_postpub_alt = na_if(
+      p_o_change_postpub_alt, 'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_reg_pub_alt = na_if(
+      p_o_change_reg_pub_alt, 'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_severe_rec_alt = na_if(
+      p_o_change_severe_rec_alt, 'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_severe_postcomp_alt = na_if(
+      p_o_change_severe_postcomp_alt, 'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_severe_postpub_alt = na_if(
+      p_o_change_severe_postpub_alt, 'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_severe_reg_pub_alt = na_if(
+      p_o_change_severe_reg_pub_alt, 'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_nonsevere_rec_alt = na_if(
+      p_o_change_nonsevere_rec_alt, 'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_nonsevere_postcomp_alt = na_if(
+      p_o_change_nonsevere_postcomp_alt, 'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_nonsevere_postpub_alt = na_if(
+      p_o_change_nonsevere_postpub_alt, 'NA'
+    )
+  ) %>%
+  mutate(
+    p_o_change_nonsevere_reg_pub_alt = na_if(
+      p_o_change_nonsevere_reg_pub_alt, 'NA'
+    )
+  )
 
-# ggsave("FigureS2.pdf",
-#        FigureS2,
-#        scale = 1.25,
-#        width = 7,
-#        height = 5
-# )
+## Figure 4: create list items
+start_completion <- na.omit(UpSet_links$p_o_change_rec_alt)
+completion_publication <- na.omit(UpSet_links$p_o_change_postcomp_alt)
+publication_latest_entry  <- na.omit(UpSet_links$p_o_change_postpub_alt)
+latest_entry_paper <- na.omit(UpSet_links$p_o_change_reg_pub_alt)
+
+## Figure 4: create list
+list_Figure4 = list(
+  'Start - Completion' = start_completion,
+  'Completion - Publication' = completion_publication,
+  'Publication - Latest Entry' = publication_latest_entry,
+  'Latest Entry - Paper' = latest_entry_paper
+)
+
+## Figure 4: create figure
+Figure4 <- upset(
+  fromList(list_Figure4),
+  sets = c('Start - Completion', 'Completion - Publication', 'Publication - Latest Entry', 'Latest Entry - Paper'),
+  keep.order = TRUE,
+  order.by = c('freq'),
+  point.size = 3,
+  line.size = 1.5,
+  sets.x.label = 'Discrepancies across timepoints',
+  mainbar.y.label = 'Number of trials'
+)
+Figure4
+
+## Figure S1: create list items
+start_completion <- na.omit(UpSet_links$p_o_change_severe_rec_alt)
+completion_publication <- na.omit(UpSet_links$p_o_change_severe_postcomp_alt)
+publication_latest_entry  <- na.omit(UpSet_links$p_o_change_severe_postpub_alt)
+latest_entry_paper <- na.omit(UpSet_links$p_o_change_severe_reg_pub_alt)
+
+## Figure S1: create list
+list_FigureS1 = list(
+  'Start - Completion' = start_completion,
+  'Completion - Publication' = completion_publication,
+  'Publication - Latest Entry' = publication_latest_entry,
+  'Latest Entry - Paper' = latest_entry_paper
+)
+
+## Figure S1: create figure
+FigureS1 <- upset(
+  fromList(list_FigureS1),
+  sets = c('Start - Completion', 'Completion - Publication', 'Publication - Latest Entry', 'Latest Entry - Paper'),
+  keep.order = TRUE,
+  order.by = c('freq'),
+  point.size = 3,
+  line.size = 1.5,
+  sets.x.label = 'Major disc. across timepoints',
+  mainbar.y.label = 'Number of trials'
+)
+FigureS1
+
+## Figure S2: create list items
+start_completion <- na.omit(UpSet_links$p_o_change_nonsevere_rec_alt)
+completion_publication <- na.omit(UpSet_links$p_o_change_nonsevere_postcomp_alt)
+publication_latest_entry  <- na.omit(UpSet_links$p_o_change_nonsevere_postpub_alt)
+latest_entry_paper <- na.omit(UpSet_links$p_o_change_nonsevere_reg_pub_alt)
+
+## Figure S2: create list
+list_FigureS2 = list(
+  'Start - Completion' = start_completion,
+  'Completion - Publication' = completion_publication,
+  'Publication - Latest Entry' = publication_latest_entry,
+  'Latest Entry - Paper' = latest_entry_paper
+)
+
+## Figure S2: create figure
+FigureS2 <- upset(
+  fromList(list_FigureS2),
+  sets = c('Start - Completion', 'Completion - Publication', 'Publication - Latest Entry', 'Latest Entry - Paper'),
+  keep.order = TRUE,
+  order.by = c('freq'),
+  point.size = 3,
+  line.size = 1.5,
+  sets.x.label = 'Minor disc. across timepoints',
+  mainbar.y.label = 'Number of trials'
+)
+FigureS2
 
 
 
@@ -920,6 +897,43 @@ p_reporting_any_reg_pub <- n_reporting_any_reg_pub / n_any_reg_pub_sample * 100
   #   binom.bayes(n_reporting_any_reg_pub, n_any_reg_pub_sample) # multiply with 100
 CI_reporting_any_reg_pub_freq <-
   binom.test(n_reporting_any_reg_pub, n_any_reg_pub_sample)$conf.int*100
+
+
+## (3) Reporting of any discrepancies!
+
+## How many trials with *any* severe changes report changes?
+dat_pub <- dat_pub %>%
+  mutate(
+    reporting_severe_any = if_else(
+      (p_o_change_severe_anywithin == TRUE | p_o_change_severe_reg_pub == TRUE) & pub_outcome_reference_binary == "1",
+      TRUE,
+      FALSE
+    )
+  )
+n_reporting_severe_any <- sum(dat_pub$reporting_severe_any, na.rm = TRUE)
+n_severe_any_sample <- nrow(filter(dat_pub, p_o_change_severe_anywithin == TRUE | p_o_change_severe_reg_pub == TRUE))
+p_reporting_severe_any <- n_reporting_severe_any / n_severe_any_sample * 100
+# CI_reporting_severe_any <-
+#   binom.bayes(n_reporting_severe_any, n_severe_any_sample) # multiply with 100
+CI_reporting_severe_any_freq <-
+  binom.test(n_reporting_severe_any, n_severe_any_sample)$conf.int*100
+
+## How many trials with *any* changes report changes?
+dat_pub <- dat_pub %>%
+  mutate(
+    reporting_any = if_else(
+      (p_o_change_anywithin == TRUE | p_o_change_reg_pub == TRUE) & pub_outcome_reference_binary == "1",
+      TRUE,
+      FALSE
+    )
+  )
+n_reporting_any <- sum(dat_pub$reporting_any, na.rm = TRUE)
+n_any_sample <- nrow(filter(dat_pub, p_o_change_anywithin == TRUE | p_o_change_reg_pub == TRUE))
+p_reporting_any <- n_reporting_any / n_any_sample * 100
+# CI_reporting_any <-
+#   binom.bayes(n_reporting_any, n_any_sample) # multiply with 100
+CI_reporting_any_freq <-
+  binom.test(n_reporting_any, n_any_sample)$conf.int*100
 
 
 
@@ -1264,7 +1278,7 @@ model_RQ4_freq_SA <- glm(
   data = dat_pub_sensitivity
 )
 summary(model_RQ4_freq_SA)
-## for interpretability, get the exponentiated coefficients, which transformes
+## for interpretability, get the exponentiated coefficients, which transforms
 ## them into odds rations
 ## to do this, it is sometimes helpful to turn off scientific notation in R
 ## using options(scipen=999)
@@ -1279,3 +1293,4 @@ dependent <- 'p_o_change_reg_pub'
 table_RQ4_freq_SA <- finalfit(dat_pub_sensitivity, dependent, explanatory)
 ## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
 hltest(model_RQ4_freq_SA)
+
