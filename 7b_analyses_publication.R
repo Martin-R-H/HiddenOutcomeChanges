@@ -3,7 +3,6 @@ library(lubridate)
 library(binom)
 library(networkD3) # for Sankey plot
 library(UpSetR) # for UpSet plot
-library(brms)
 library(finalfit)
 library(glmtoolbox)
 library(testthat)
@@ -313,44 +312,32 @@ test_that(
 ## any changes between latest registry entry and publication
 n_any_reg_pub <- sum(dat$p_o_change_reg_pub, na.rm = T)
 p_any_reg_pub <- sum(dat$p_o_change_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
-  # CI_any_reg_pub <-
-  #   binom.bayes(n_any_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
-CI_any_reg_pub_freq <-
+CI_any_reg_pub <-
   binom.test(n_any_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## severe changes between latest registry entry and publication
 n_severe_reg_pub <- sum(dat$p_o_change_severe_reg_pub, na.rm = T)
 p_severe_reg_pub <- sum(dat$p_o_change_severe_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
-  # CI_severe_reg_pub <-
-  #   binom.bayes(n_severe_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
-CI_severe_reg_pub_freq <-
+CI_severe_reg_pub <-
   binom.test(n_severe_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## non-severe changes between latest registry entry and publication
 n_nonsevere_reg_pub <- sum(dat$p_o_change_nonsevere_reg_pub, na.rm = T)
 p_nonsevere_reg_pub <- sum(dat$p_o_change_nonsevere_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
-  # CI_nonsevere_reg_pub <-
-  #   binom.bayes(n_nonsevere_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
-CI_nonsevere_reg_pub_freq <-
+CI_nonsevere_reg_pub <-
   binom.test(n_nonsevere_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## non-severe changes (changes) between latest registry entry and publication
 n_nonsevere_c_reg_pub <- sum(dat$p_o_change_nonsevere_c_reg_pub, na.rm = T)
 p_nonsevere_c_reg_pub <- sum(dat$p_o_change_nonsevere_c_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
-  # CI_nonsevere_c_reg_pub <-
-  #   binom.bayes(n_nonsevere_c_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
-CI_nonsevere_c_reg_pub_freq <-
+CI_nonsevere_c_reg_pub <-
   binom.test(n_nonsevere_c_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## non-severe changes (additions or omissions) between latest registry entry and publication
 n_nonsevere_ao_reg_pub <- sum(dat$p_o_change_nonsevere_ao_reg_pub, na.rm = T)
 p_nonsevere_ao_reg_pub <- sum(dat$p_o_change_nonsevere_ao_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
-  # CI_nonsevere_ao_reg_pub <-
-  #   binom.bayes(n_nonsevere_ao_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
-CI_nonsevere_ao_reg_pub_freq <-
+CI_nonsevere_ao_reg_pub <-
   binom.test(n_nonsevere_ao_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## no changes between latest registry entry and publication
 n_no_change_reg_pub <- sum(dat$no_change_reg_pub, na.rm = T)
 p_no_change_reg_pub <- sum(dat$no_change_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
-  # CI_no_change_reg_pub <-
-  #   binom.bayes(n_no_change_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
-CI_no_change_reg_pub_freq <-
+CI_no_change_reg_pub <-
   binom.test(n_no_change_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 
 ## run some tests
@@ -375,9 +362,7 @@ n_hidden_changes <- sum(
   na.rm = TRUE
 )
 p_hidden_changes <- n_hidden_changes / sum(dat$has_publication_rating)*100
-  # CI_hidden_changes <-
-  #   binom.bayes(n_hidden_changes, sum(dat$has_publication_rating)) # multiply with 100
-CI_hidden_changes_freq <-
+CI_hidden_changes <-
   binom.test(n_hidden_changes, sum(dat$has_publication_rating))$conf.int*100
 ## also calculate numbers for major and minor changes
 n_hidden_changes_severe <- sum(
@@ -398,9 +383,7 @@ n_only_reg_pub <- sum(
   na.rm = TRUE
 )
 p_only_reg_pub <- n_only_reg_pub / sum(dat$has_publication_rating)*100
-  # CI_only_reg_pub <-
-  #   binom.bayes(n_only_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
-CI_only_reg_pub_freq <-
+CI_only_reg_pub <-
   binom.test(n_only_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## also calculate numbers for major and minor changes
 n_only_reg_pub_severe <- sum(
@@ -421,9 +404,7 @@ n_within_and_reg_pub <- sum(
   na.rm = TRUE
 )
 p_within_and_reg_pub <- n_within_and_reg_pub / sum(dat$has_publication_rating)*100
-  # CI_within_and_reg_pub <-
-  #   binom.bayes(n_within_and_reg_pub, sum(dat$has_publication_rating)) # multiply with 100
-CI_within_and_reg_pub_freq <-
+CI_within_and_reg_pub <-
   binom.test(n_within_and_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## also calculate numbers for major and minor changes
 n_within_and_reg_pub_severe <- sum(
@@ -448,9 +429,7 @@ p_neither_nor <- n_neither_nor / sum(dat$has_publication_rating)*100
 ## all types of changes combined
 n_hidden_and_overt <- n_hidden_changes + n_only_reg_pub + n_within_and_reg_pub
 p_hidden_and_overt <- n_hidden_and_overt / sum(dat$has_publication_rating)*100
-# CI_hidden_and_overt <-
-#   binom.bayes(n_hidden_and_overt, sum(dat$has_publication_rating)) # multiply with 100
-CI_hidden_and_overt_freq <-
+CI_hidden_and_overt <-
   binom.test(n_hidden_and_overt, sum(dat$has_publication_rating))$conf.int*100
 
 ## run a test
@@ -839,9 +818,7 @@ dat_pub <- dat_pub %>%
 n_reporting_severe_anywithin <- sum(dat_pub$reporting_severe_anywithin, na.rm = TRUE)
 n_severe_anywithin_sample <- sum(dat_pub$p_o_change_severe_anywithin, na.rm = TRUE)
 p_reporting_severe_anywithin <- n_reporting_severe_anywithin / n_severe_anywithin_sample * 100
-  # CI_reporting_severe_anywithin <-
-  #   binom.bayes(n_reporting_severe_anywithin, n_severe_anywithin_sample) # multiply with 100
-CI_reporting_severe_anywithin_freq <-
+CI_reporting_severe_anywithin <-
   binom.test(n_reporting_severe_anywithin, n_severe_anywithin_sample)$conf.int*100
 
 ## How many trials with *any* within-registry changes report changes?
@@ -856,9 +833,7 @@ dat_pub <- dat_pub %>%
 n_reporting_any_anywithin <- sum(dat_pub$reporting_any_anywithin, na.rm = TRUE)
 n_any_anywithin_sample <- sum(dat_pub$p_o_change_anywithin, na.rm = TRUE)
 p_reporting_any_anywithin <- n_reporting_any_anywithin / n_any_anywithin_sample * 100
-  # CI_reporting_any_anywithin <-
-  #   binom.bayes(n_reporting_any_anywithin, n_any_anywithin_sample) # multiply with 100
-CI_reporting_any_anywithin_freq <-
+CI_reporting_any_anywithin <-
   binom.test(n_reporting_any_anywithin, n_any_anywithin_sample)$conf.int*100
 
 
@@ -876,9 +851,7 @@ dat_pub <- dat_pub %>%
 n_reporting_severe_reg_pub <- sum(dat_pub$reporting_severe_reg_pub, na.rm = TRUE)
 n_severe_reg_pub_sample <- sum(dat_pub$p_o_change_severe_reg_pub, na.rm = TRUE)
 p_reporting_severe_reg_pub <- n_reporting_severe_reg_pub / n_severe_reg_pub_sample * 100
-  # CI_reporting_severe_reg_pub <-
-  #   binom.bayes(n_reporting_severe_reg_pub, n_severe_reg_pub_sample) # multiply with 100
-CI_reporting_severe_reg_pub_freq <-
+CI_reporting_severe_reg_pub <-
   binom.test(n_reporting_severe_reg_pub, n_severe_reg_pub_sample)$conf.int*100
 
 ## How many trials with any registry-publication changes report changes?
@@ -893,9 +866,7 @@ dat_pub <- dat_pub %>%
 n_reporting_any_reg_pub <- sum(dat_pub$reporting_any_reg_pub, na.rm = TRUE)
 n_any_reg_pub_sample <- sum(dat_pub$p_o_change_reg_pub, na.rm = TRUE)
 p_reporting_any_reg_pub <- n_reporting_any_reg_pub / n_any_reg_pub_sample * 100
-  # CI_reporting_any_reg_pub  <-
-  #   binom.bayes(n_reporting_any_reg_pub, n_any_reg_pub_sample) # multiply with 100
-CI_reporting_any_reg_pub_freq <-
+CI_reporting_any_reg_pub <-
   binom.test(n_reporting_any_reg_pub, n_any_reg_pub_sample)$conf.int*100
 
 
@@ -913,9 +884,7 @@ dat_pub <- dat_pub %>%
 n_reporting_severe_any <- sum(dat_pub$reporting_severe_any, na.rm = TRUE)
 n_severe_any_sample <- nrow(filter(dat_pub, p_o_change_severe_anywithin == TRUE | p_o_change_severe_reg_pub == TRUE))
 p_reporting_severe_any <- n_reporting_severe_any / n_severe_any_sample * 100
-# CI_reporting_severe_any <-
-#   binom.bayes(n_reporting_severe_any, n_severe_any_sample) # multiply with 100
-CI_reporting_severe_any_freq <-
+CI_reporting_severe_any <-
   binom.test(n_reporting_severe_any, n_severe_any_sample)$conf.int*100
 
 ## How many trials with *any* changes report changes?
@@ -930,9 +899,7 @@ dat_pub <- dat_pub %>%
 n_reporting_any <- sum(dat_pub$reporting_any, na.rm = TRUE)
 n_any_sample <- nrow(filter(dat_pub, p_o_change_anywithin == TRUE | p_o_change_reg_pub == TRUE))
 p_reporting_any <- n_reporting_any / n_any_sample * 100
-# CI_reporting_any <-
-#   binom.bayes(n_reporting_any, n_any_sample) # multiply with 100
-CI_reporting_any_freq <-
+CI_reporting_any <-
   binom.test(n_reporting_any, n_any_sample)$conf.int*100
 
 
@@ -948,46 +915,7 @@ CI_reporting_any_freq <-
 
 ## the model will be estimated with a generalised linear model (logistic
 ## regression)
-
-## bayesian model
-# model_RQ2 <- brm(
-#   as.numeric(p_o_change_anywithin) ~
-#     phase_recoded +
-#     main_sponsor +
-#     publication_year +
-#     registration_year +
-#     medical_field_recoded +
-#     # medical_field_recoded_binary +
-#     registry +
-#     is_multicentric +
-#     enrollment +
-#     intervention_type_recoded,
-#   family="binomial",
-#   data = dat,
-#   cores = getOption('mc.cores', 2),
-#   seed = 227 # I again asked Siri for a number between 1 and 999
-# )
-# summary(model_RQ2)
-
-## see what priors the model used
-# get_prior(
-#   as.numeric(p_o_change_anywithin) ~
-#     phase_recoded +
-#     main_sponsor +
-#     publication_year +
-#     registration_year +
-#     medical_field_recoded +
-#     # medical_field_recoded_binary +
-#     registry +
-#     is_multicentric +
-#     enrollment +
-#     intervention_type_recoded,
-#   family="binomial",
-#   data = dat
-# )
-
-## frequentist model
-model_RQ2_freq <- glm(
+model_RQ2 <- glm(
   p_o_change_anywithin ~
     phase_recoded +
     main_sponsor +
@@ -1001,24 +929,24 @@ model_RQ2_freq <- glm(
   family="binomial",
   data = dat
 )
-summary(model_RQ2_freq)
+summary(model_RQ2)
 
 ## for interpretability, get the exponentiated coefficients, which transformes
 ## them into odds rations
 ## to do this, it is sometimes helpful to turn off scientific notation in R
 ## using options(scipen=999)
-exp(coef(model_RQ2_freq))
+exp(coef(model_RQ2))
 ## retrieve the confidence intervals for the Odds Ratios - but is this necessary,
 ## since this is no sample?
-exp(confint(model_RQ2_freq))
+exp(confint(model_RQ2))
 ## the finalfit package automatically creates a table with frequencies and means
 explanatory <- c(
   'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
 )
 dependent <- 'p_o_change_anywithin'
-table_RQ2_freq <- finalfit(dat, dependent, explanatory)
+table_RQ2 <- finalfit(dat, dependent, explanatory)
 ## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
-hltest(model_RQ2_freq)
+hltest(model_RQ2)
 
 
 
@@ -1032,47 +960,7 @@ hltest(model_RQ2_freq)
 
 ## the model will be estimated with a generalised linear model (logistic
 ## regression)
-
-
-## bayesian model
-# model_RQ4 <- brm(
-#   as.numeric(p_o_change_reg_pub) ~
-#     phase_recoded +
-#     main_sponsor +
-#     publication_year +
-#     registration_year +
-#     # medical_field_recoded +
-#     medical_field_recoded_binary +
-#     registry +
-#     is_multicentric +
-#     enrollment +
-#     intervention_type_recoded,
-#   family="binomial",
-#   data = dat_pub,
-#   cores = getOption('mc.cores', 2),
-#   seed = 754 # I again asked Siri for a number between 1 and 999
-# )
-# summary(model_RQ4)
-
-## see what priors the model used
-# get_prior(
-#   as.numeric(p_o_change_anywithin) ~
-#     phase_recoded +
-#     main_sponsor +
-#     publication_year +
-#     registration_year +
-#     # medical_field_recoded +
-#     medical_field_recoded_binary +
-#     registry +
-#     is_multicentric +
-#     enrollment +
-#     intervention_type_recoded,
-#   family="binomial",
-#   data = dat_pub
-# )
-
-## frequentist model
-model_RQ4_freq <- glm(
+model_RQ4 <- glm(
   p_o_change_reg_pub ~
     phase_recoded +
     main_sponsor +
@@ -1086,22 +974,22 @@ model_RQ4_freq <- glm(
   family="binomial",
   data = dat_pub
 )
-summary(model_RQ4_freq)
+summary(model_RQ4)
 ## for interpretability, get the exponentiated coefficients, which transformes
 ## them into odds rations
 ## to do this, it is sometimes helpful to turn off scientific notation in R
 ## using options(scipen=999)
-exp(coef(model_RQ4_freq))
+exp(coef(model_RQ4))
 ## retrieve the confidence intervals for the Odds Ratios
-exp(confint(model_RQ4_freq))
+exp(confint(model_RQ4))
 ## the finalfit package automatically creates a table with frequencies and means
 explanatory <- c(
   'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
 )
 dependent <- 'p_o_change_reg_pub'
-table_RQ4_freq <- finalfit(dat_pub, dependent, explanatory)
+table_RQ4 <- finalfit(dat_pub, dependent, explanatory)
 ## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
-hltest(model_RQ4_freq)
+hltest(model_RQ4)
 
 
 
@@ -1123,17 +1011,17 @@ hltest(model_RQ4_freq)
 # summary(model_RQ5)
 
 ## frequentist model
-model_RQ5_freq <- glm(
+model_RQ5 <- glm(
   p_o_change_reg_pub ~ p_o_change_anywithin,
   family = 'binomial',
   data = dat_pub
 )
-summary(model_RQ5_freq)
-exp(coef(model_RQ5_freq)) # options(scipen=999)
+summary(model_RQ5)
+exp(coef(model_RQ5)) # options(scipen=999)
 ## the finalfit package automatically creates a table with frequencies and means
 explanatory <- 'p_o_change_anywithin'
 dependent <- 'p_o_change_reg_pub'
-table_RQ5_freq <- finalfit(dat_pub, dependent, explanatory)
+table_RQ5 <- finalfit(dat_pub, dependent, explanatory)
 
 
 
@@ -1196,7 +1084,7 @@ n_hidden_changes_SA <- sum(
   na.rm = TRUE
 )
 p_hidden_changes_SA <- n_hidden_changes_SA / sum(dat_pub_sensitivity$has_publication_rating)*100
-CI_hidden_changes_freq_SA <-
+CI_hidden_changes_SA <-
   binom.test(n_hidden_changes_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
 ## also calculate numbers for major and minor changes
 n_hidden_changes_severe_SA <- sum(
@@ -1215,7 +1103,7 @@ n_only_reg_pub_SA <- sum(
   na.rm = TRUE
 )
 p_only_reg_pub_SA <- n_only_reg_pub_SA / sum(dat_pub_sensitivity$has_publication_rating)*100
-CI_only_reg_pub_freq_SA <-
+CI_only_reg_pub_SA <-
   binom.test(n_only_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
 ## also calculate numbers for major and minor changes
 n_only_reg_pub_severe_SA <- sum(
@@ -1234,7 +1122,7 @@ n_within_and_reg_pub_SA <- sum(
   na.rm = TRUE
 )
 p_within_and_reg_pub_SA <- n_within_and_reg_pub_SA / sum(dat_pub_sensitivity$has_publication_rating)*100
-CI_within_and_reg_pub_freq_SA <-
+CI_within_and_reg_pub_SA <-
   binom.test(n_within_and_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
 ## also calculate numbers for major and minor changes
 n_within_and_reg_pub_severe_SA <- sum(
@@ -1257,13 +1145,13 @@ p_neither_nor_SA <- n_neither_nor_SA / sum(dat_pub_sensitivity$has_publication_r
 ## all types of changes combined
 n_hidden_and_overt_SA <- n_hidden_changes_SA + n_only_reg_pub_SA + n_within_and_reg_pub_SA
 p_hidden_and_overt_SA <- n_hidden_and_overt_SA / sum(dat_pub_sensitivity$has_publication_rating)*100
-CI_hidden_and_overt_freq_SA <-
+CI_hidden_and_overt_SA <-
   binom.test(n_hidden_and_overt_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
 
 ## SENSITIVITY ANALYSIS - OBJECTIVE 5
 
 ## frequentist model
-model_RQ4_freq_SA <- glm(
+model_RQ4_SA <- glm(
   p_o_change_reg_pub ~
     phase_recoded +
     main_sponsor +
@@ -1277,20 +1165,20 @@ model_RQ4_freq_SA <- glm(
   family="binomial",
   data = dat_pub_sensitivity
 )
-summary(model_RQ4_freq_SA)
+summary(model_RQ4_SA)
 ## for interpretability, get the exponentiated coefficients, which transforms
 ## them into odds rations
 ## to do this, it is sometimes helpful to turn off scientific notation in R
 ## using options(scipen=999)
-exp(coef(model_RQ4_freq_SA))
+exp(coef(model_RQ4_SA))
 ## retrieve the confidence intervals for the Odds Ratios
-exp(confint(model_RQ4_freq_SA))
+exp(confint(model_RQ4_SA))
 ## the finalfit package automatically creates a table with frequencies and means
 explanatory <- c(
   'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
 )
 dependent <- 'p_o_change_reg_pub'
-table_RQ4_freq_SA <- finalfit(dat_pub_sensitivity, dependent, explanatory)
+table_RQ4_SA <- finalfit(dat_pub_sensitivity, dependent, explanatory)
 ## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
-hltest(model_RQ4_freq_SA)
+hltest(model_RQ4_SA)
 
