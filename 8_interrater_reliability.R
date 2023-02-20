@@ -13,6 +13,7 @@ irr_wh <- read_tsv(
   arrange(referenceid)
 
 
+
 ## ---- within-history ratings: merge data with trial ids ----
 
 ## this is necessary because in the first rating dataset, the trial id had
@@ -430,6 +431,7 @@ irr_wh <- irr_wh %>%
 rm(irr_wh_add, irr_wh_add_1, irr_wh_add_2, irr_wh_add_3)
 
 
+
 ## ---- within-history ratings: arrange data ----
 
 ## first, re-arrange the original ratings set
@@ -483,7 +485,8 @@ irr_wh_comb <- irr_wh_comb %>%
   relocate(study_phase, .after = trial_id)
 
 
-## ---- within-history ratings: calculate Kappa ----
+
+## ---- within-history ratings: Kappa ----
 
 ## to calculate interrater reliability, let's calculate Cohen's kappa
 irr_wh <- kappa2(irr_wh_comb[, 4:5])
@@ -500,7 +503,10 @@ irr_wh
 # kripp.alpha(t(as.matrix(irr_wh_comb[, 3:4])), 'ordinal')
 
 
-## ---- within-history ratings: calculate Kappa on timepoint-wise basis ----
+
+## ---- within-history ratings: Kappa, timepoint-wise ----
+
+## restructure the dataset accordingly
 irr_wh_comb_t <- irr_wh_comb %>%
   group_by(trial_id, study_phase) %>%
   mutate(value_MRH_collapsed = glue_collapse(value_MRH)) %>%
@@ -509,9 +515,10 @@ irr_wh_comb_t <- irr_wh_comb %>%
   ungroup() %>%
   select(-name, -value_MRH, -value_MJH)
 
-# calculate Kappa, once again
+## calculate Kappa, once again
 irr_wh_timepoints <- kappa2(irr_wh_comb_t[, 3:4])
 irr_wh_timepoints
+
 
 
 ## ---- registry-publication ratings: read data ----
@@ -528,6 +535,7 @@ irr_regpub_2 <- read_tsv(
   'http://numbat.bgcarlisle.com/fmetrics/export/2022-10-10_064146-form_3-refset_19-extractions.tsv'
 ) %>%
   arrange(referenceid)
+
 
 
 ## ---- registry-publication ratings: arrange data ----
@@ -615,9 +623,11 @@ irr_regpub_comb  <- irr_regpub_comb %>%
   )) %>%
   mutate(value_Rater1 = as.numeric(value_Rater1)) %>%
   mutate(value_Rater2 = as.numeric(value_Rater2))
+  # one could also leave it as is, but it does not change a thing
 
 
-## ---- registry-publication ratings: calculate Kappa ----
+
+## ---- registry-publication ratings: Kappa ----
 
 ## to calculate interrater reliability, let's calculate Cohen's kappa
 irr_regpub <- kappa2(irr_regpub_comb[, 3:4])
@@ -634,7 +644,8 @@ irr_regpub
 # kripp.alpha(t(as.matrix(irr_wh_comb[, 3:4])), 'ordinal')
 
 
-## ---- registry-publication ratings: calculate Kappa on timepoint-wise basis ----
+
+## ---- registry-publication ratings: Kappa, timepoint-wise ----
 irr_regpub_comb_c <- irr_regpub_comb %>%
   group_by(trial_id) %>%
   mutate(value_Rater1_collapsed = glue_collapse(value_Rater1)) %>%
@@ -646,3 +657,163 @@ irr_regpub_comb_c <- irr_regpub_comb %>%
 # calculate Kappa, once again
 irr_regpub_cases <- kappa2(irr_regpub_comb_c[, 2:3])
 irr_regpub_cases
+
+
+
+## ---- registry-publication ratings: Kappa, based on discrepancy categories ----
+
+## create a dataset for just the 'major discrepancies' ratings
+irr_regpub_comb_c_1 <- irr_regpub_comb %>%
+  filter(
+    str_detect(name, 'new_primary') |
+      str_detect(name, 'primary_from_secondary') |
+      str_detect(name, 'primary_to_secondary') |
+      str_detect(name, 'primary_omitted')
+  )
+## calculate Kappa
+irr_regpub_major <- kappa2(irr_regpub_comb_c_1[, 3:4])
+irr_regpub_major
+# alternative methods:
+# meanrho(irr_regpub_comb_c_1[, 3:4], fisher = TRUE)
+# kripp.alpha(t(as.matrix(irr_regpub_comb_c_1[, 3:4])), 'ordinal')
+
+## create a dataset for just the 'minor discrepancies (changes)' ratings
+irr_regpub_comb_c_2 <- irr_regpub_comb %>%
+  filter(
+    str_detect(name, 'change_measurement') |
+      str_detect(name, 'change_aggregation') |
+      str_detect(name, 'change_timing')
+  )
+## calculate Kappa
+irr_regpub_minor_changes <- kappa2(irr_regpub_comb_c_2[, 3:4])
+irr_regpub_minor_changes
+# alternative methods:
+# meanrho(irr_regpub_comb_c_2[, 3:4], fisher = TRUE)
+# kripp.alpha(t(as.matrix(irr_regpub_comb_c_2[, 3:4])), 'ordinal')
+
+## create a dataset for just the 'minor discrepancies (additions or omissions)' ratings
+irr_regpub_comb_c_3 <- irr_regpub_comb %>%
+  filter(
+    str_detect(name, 'added_measurement') |
+      str_detect(name, 'added_aggregation') |
+      str_detect(name, 'added_timing') |
+      str_detect(name, 'omitted_measurement') |
+      str_detect(name, 'omitted_aggregation') |
+      str_detect(name, 'omitted_timing')
+  )
+## calculate Kappa
+irr_regpub_minor_add_omm <- kappa2(irr_regpub_comb_c_3[, 3:4])
+irr_regpub_minor_add_omm
+# alternative methods:
+# meanrho(irr_regpub_comb_c_3[, 3:4], fisher = TRUE)
+# kripp.alpha(t(as.matrix(irr_regpub_comb_c_3[, 3:4])), 'ordinal')
+
+## create a dataset for just the 'no changes' ratings
+irr_regpub_comb_c_4 <- irr_regpub_comb %>%
+  filter(
+    str_detect(name, 'no_change')
+  )
+## calculate Kappa
+irr_regpub_no_change <- kappa2(irr_regpub_comb_c_4[, 3:4])
+irr_regpub_no_change
+# alternative methods:
+# meanrho(irr_regpub_comb_c_4[, 3:4], fisher = TRUE)
+# kripp.alpha(t(as.matrix(irr_regpub_comb_c_4[, 3:4])), 'ordinal')
+
+
+
+## ---- registry-publication ratings: Kappa, based on global categories ----
+
+irr_regpub_comb_global <- irr_regpub_comb %>%
+  group_by(trial_id) %>%
+  mutate(
+    cat_Rater1 = case_when(
+      value_Rater1[1] == '1' |
+        value_Rater1[2] == '1' |
+        value_Rater1[12] == '1' |
+        value_Rater1[13] == '1' ~ 'major',
+      value_Rater1[3] == '1' |
+        value_Rater1[4] == '1' |
+        value_Rater1[5] == '1' |
+        value_Rater1[6] == '1' |
+        value_Rater1[7] == '1' |
+        value_Rater1[8] == '1' |
+        value_Rater1[9] == '1' |
+        value_Rater1[10] == '1' |
+        value_Rater1[11] == '1' ~ 'minor',
+      value_Rater1[14] == '1' ~ 'no change'
+    )
+  ) %>%
+  mutate(
+    cat_Rater2 = case_when(
+      value_Rater2[1] == '1' |
+        value_Rater2[2] == '1' |
+        value_Rater2[12] == '1' |
+        value_Rater2[13] == '1' ~ 'major',
+      value_Rater2[3] == '1' |
+        value_Rater2[4] == '1' |
+        value_Rater2[5] == '1' |
+        value_Rater2[6] == '1' |
+        value_Rater2[7] == '1' |
+        value_Rater2[8] == '1' |
+        value_Rater2[9] == '1' |
+        value_Rater2[10] == '1' |
+        value_Rater2[11] == '1' ~ 'minor',
+      value_Rater2[14] == '1' ~ 'no change'
+    )
+  ) %>%
+  slice_head() %>%
+  ungroup() %>%
+  select(-name, -value_Rater1, -value_Rater2)
+  
+
+## calculate Kappa
+irr_regpub_global <- kappa2(irr_regpub_comb_global[, 2:3])
+irr_regpub_global
+# alternative methods:
+# meanrho(irr_regpub_comb_global[, 3:4], fisher = TRUE)
+# kripp.alpha(t(as.matrix(irr_regpub_comb_global[, 3:4])), 'ordinal')
+
+## look at the cases that Lars singled out - the ones where one rater has major
+## changes and the other none
+sum(irr_regpub_comb_global$cat_Rater1 == irr_regpub_comb_global$cat_Rater2, na.rm = TRUE) # 165
+sum(irr_regpub_comb_global$cat_Rater1 != irr_regpub_comb_global$cat_Rater2, na.rm = TRUE) # 100
+irr_regpub_comb_global_cases <- irr_regpub_comb_global %>%
+  filter(
+    (cat_Rater1 == 'major' & cat_Rater2 == 'no change') | (cat_Rater1 == 'no Change' & cat_Rater2 == 'major')
+  )
+
+# irr_regpub_comb_global %>% write_csv('irr_new_analysis.csv')
+
+
+
+## ---- SENSITIVITY ANALYSIS ----
+
+## for this sensitivity analysis, we calculate the interrater reliability for
+## the registry-publication ratings, but only based on those publications in
+## which the outcome was determined explicitly
+
+## merge data on how primary outcome was determined
+outcome_determination <- read_csv(
+  'data/processed_history_data_analyses.csv',
+  guess_max = 2000 # solves the parsing issue from script 7a
+) %>%
+  filter(has_publication_rating == TRUE) %>%
+  select(
+    id,
+    outcome_determined
+  )
+irr_regpub_comb <- irr_regpub_comb %>%
+  left_join(outcome_determination, by = c('trial_id' = 'id'))
+
+## calculate Kappa separately
+irr_regpub_1 <- irr_regpub_comb %>%
+  filter(outcome_determined == 'explicit') %>%
+  select(3:4) %>%
+  kappa2()
+irr_regpub_1
+irr_regpub_2 <- irr_regpub_comb %>%
+  filter(outcome_determined == 'ss_calculation' | outcome_determined == 'first_reported') %>%
+  select(3:4) %>%
+  kappa2()
+irr_regpub_2
