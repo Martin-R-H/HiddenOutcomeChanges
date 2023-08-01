@@ -2,6 +2,7 @@ library(tidyverse)
 library(lubridate)
 library(binom)
 library(networkD3) # for Sankey plot
+library(plotly) # for revised Sankey plot
 library(UpSetR) # for UpSet plot
 library(finalfit)
 library(glmtoolbox)
@@ -450,21 +451,23 @@ test_that(
 
 dat_pub <- dat %>%
   filter(has_publication_rating == TRUE)
+## (at this point, we work with the full dataset, but could also create tbe
+## Sankey plot just for the sample of 300)
 
 ## Figure 3: Sankey plot for changes in the sample of 300
 dat_Figure3_nodes <- tribble(
   ~name, ~name_type,
-  'Major (Start vs Completion)', 'major',      # 0
-  'Minor (Start vs Completion)', 'minor',      # 1
-  'No Changes (Start vs Completion)', 'no_change',              # 2
+  'Major', 'major',      # 0
+  'Minor', 'minor',      # 1
+  'No Changes', 'no_change',              # 2
   'No Information', 'no_phase',                 # 3
-  'Major (Completion vs Pub.)',  'major', # 4
-  'Minor (Completion vs Pub.)', 'minor',  # 5
-  'No Changes (Completion vs Pub.)', 'no_change',          # 6
+  'Major',  'major', # 4
+  'Minor', 'minor',  # 5
+  'No Changes', 'no_change',          # 6
   'No Information', 'no_phase',             # 7
-  'Major (Pub. vs Latest)', 'major', # 8
-  'Minor (Pub. vs Latest)', 'minor',# 9
-  'No Changes (Pub. vs Latest)', 'no_change',         # 10
+  'Major', 'major', # 8
+  'Minor', 'minor',# 9
+  'No Changes', 'no_change',         # 10
   'No Information', 'no_phase' #,            # 11
   # 'Major (Latest vs Paper)', 'major', # 12
   # 'Minor (Latest vs Paper)', 'minor', # 13
@@ -538,6 +541,147 @@ Figure3 <- sankeyNetwork(
   # colourScale=ColourScal, nodeWidth=40, nodePadding=20
 )
 Figure3
+
+
+
+## ---- OBJECTIVE 3: Figure 3 (Sankey Plot - Revised) --------------------------
+
+## What are the pathways of changes that happen within the registry across study
+## phases?
+## As a more comprehensive assessment of when changes are made - especially
+## keeping in mind the possibility of changes at multiple time points -, we do
+## a Sankey Plot for changes for the published trials.
+
+Figure3_Revisions <- plot_ly(
+  type = 'sankey',
+  orientation = 'h',
+  node = list(
+    label = dat_Figure3_nodes$name,
+    color = c('#FE6100', '#DC267F', '#785EF0', '#648FFF', '#FE6100', '#DC267F', '#785EF0', '#648FFF', '#FE6100', '#DC267F', '#785EF0', '#648FFF')
+  ),
+  link = list(
+    source = c(0,0,0,0, 1,1,1,1, 2,2,2,2, 3,3,3,3, 4,4,4,4, 5,5,5,5, 6,6,6,6, 7,7,7,7),
+    target = c(4,5,6,7, 4,5,6,7, 4,5,6,7, 4,5,6,7, 8,9,10,11, 8,9,10,11, 8,9,10,11, 8,9,10,11),
+    value = c(
+      
+      nrow(filter(dat, p_o_change_severe_rec == TRUE & p_o_change_severe_postcomp == TRUE)), # Major (Start vs Completion) [0] AND Major (Completion vs Pub.) [4]
+      nrow(filter(dat, p_o_change_severe_rec == TRUE & p_o_change_nonsevere_postcomp == TRUE)), # Major (Start vs Completion) [0] AND Minor (Completion vs Pub.) [5]
+      nrow(filter(dat, p_o_change_severe_rec == TRUE & no_change_postcomp == TRUE)), # Major (Start vs Completion) [0] AND No Changes (Completion vs Pub.) [6]
+      nrow(filter(dat, p_o_change_severe_rec == TRUE & no_postcomp_phase == TRUE)), # Major (Start vs Completion) [0] AND No Information [7]
+      
+      nrow(filter(dat, p_o_change_nonsevere_rec == TRUE & p_o_change_severe_postcomp == TRUE)), # Minor (Start vs Completion) [1] AND Major (Completion vs Pub.) [4]
+      nrow(filter(dat, p_o_change_nonsevere_rec == TRUE & p_o_change_nonsevere_postcomp == TRUE)), # Minor (Start vs Completion) [1] AND Minor (Completion vs Pub.) [5]
+      nrow(filter(dat, p_o_change_nonsevere_rec == TRUE & no_change_postcomp == TRUE)), # Minor (Start vs Completion) [1] AND No Changes (Completion vs Pub.) [6]
+      nrow(filter(dat, p_o_change_nonsevere_rec == TRUE & no_postcomp_phase == TRUE)), # Minor (Start vs Completion) [1] AND No Information [7]
+      
+      nrow(filter(dat, no_change_rec == TRUE & p_o_change_severe_postcomp == TRUE)), # No Changes (Start vs Completion) [2] AND Major (Completion vs Pub.) [4]
+      nrow(filter(dat, no_change_rec == TRUE & p_o_change_nonsevere_postcomp == TRUE)), # No Changes (Start vs Completion) [2] AND Minor (Completion vs Pub.) [5]
+      nrow(filter(dat, no_change_rec == TRUE & no_change_postcomp == TRUE)), # No Changes (Start vs Completion) [2] AND No Changes (Completion vs Pub.) [6]
+      nrow(filter(dat, no_change_rec == TRUE & no_postcomp_phase == TRUE)), # No Changes (Start vs Completion) [2] AND No Information [7]
+      
+      nrow(filter(dat, no_rec_phase == TRUE & p_o_change_severe_postcomp == TRUE)), # No Information [3] AND Major (Completion vs Pub.) [4]
+      nrow(filter(dat, no_rec_phase == TRUE & p_o_change_nonsevere_postcomp == TRUE)), # No Information [3] AND Minor (Completion vs Pub.) [5]
+      nrow(filter(dat, no_rec_phase == TRUE & no_change_postcomp == TRUE)), # No Information [3] AND No Changes (Completion vs Pub.) [6]
+      nrow(filter(dat, no_rec_phase == TRUE & no_postcomp_phase == TRUE)), # No Information [3] AND No Information [7]
+      
+      nrow(filter(dat, p_o_change_severe_postcomp == TRUE & p_o_change_severe_postpub == TRUE)), # Major (Completion vs Pub.) [4] AND Major (Pub. vs Latest) [8]
+      nrow(filter(dat, p_o_change_severe_postcomp == TRUE & p_o_change_nonsevere_postpub == TRUE)), # Major (Completion vs Pub.) [4] AND Minor (Pub. vs Latest) [9]
+      nrow(filter(dat, p_o_change_severe_postcomp == TRUE & no_change_postpub == TRUE)), # Major (Completion vs Pub.) [4] AND No Changes (Pub. vs Latest) [10]
+      nrow(filter(dat, p_o_change_severe_postcomp == TRUE & no_postpub_phase == TRUE)), # Major (Completion vs Pub.) [4] AND No Information [11]
+      
+      nrow(filter(dat, p_o_change_nonsevere_postcomp == TRUE & p_o_change_severe_postpub == TRUE)), # Minor (Completion vs Pub.) [5] AND Major (Pub. vs Latest) [8]
+      nrow(filter(dat, p_o_change_nonsevere_postcomp == TRUE & p_o_change_nonsevere_postpub == TRUE)), # Minor (Completion vs Pub.) [5] AND Minor (Pub. vs Latest) [9]
+      nrow(filter(dat, p_o_change_nonsevere_postcomp == TRUE & no_change_postpub == TRUE)), # Minor (Completion vs Pub.) [5] AND No Changes (Pub. vs Latest) [10]
+      nrow(filter(dat, p_o_change_nonsevere_postcomp == TRUE & no_postpub_phase == TRUE)), # Minor (Completion vs Pub.) [5] AND No Information [11]
+      
+      nrow(filter(dat, no_change_postcomp == TRUE & p_o_change_severe_postpub == TRUE)), # No Changes (Completion vs Pub.) [6] AND Major (Pub. vs Latest) [8]
+      nrow(filter(dat, no_change_postcomp == TRUE & p_o_change_nonsevere_postpub == TRUE)), # No Changes (Completion vs Pub.) [6] AND Minor (Pub. vs Latest) [9]
+      nrow(filter(dat, no_change_postcomp == TRUE & no_change_postpub == TRUE)), # No Changes (Completion vs Pub.) [6] AND No Changes (Pub. vs Latest) [10]
+      nrow(filter(dat, no_change_postcomp == TRUE & no_postpub_phase == TRUE)), # No Changes (Completion vs Pub.) [6] AND No Information [11]
+      
+      nrow(filter(dat, no_postcomp_phase == TRUE & p_o_change_severe_postpub == TRUE)), # No Information [7] AND Major (Pub. vs Latest) [8]
+      nrow(filter(dat, no_postcomp_phase == TRUE & p_o_change_nonsevere_postpub == TRUE)), # No Information [7] AND Minor (Pub. vs Latest) [9]
+      nrow(filter(dat, no_postcomp_phase == TRUE & no_change_postpub == TRUE)), # No Information [7] AND No Changes (Pub. vs Latest) [10]
+      nrow(filter(dat, no_postcomp_phase == TRUE & no_postpub_phase == TRUE)) # No Information [7] AND No Information [11]
+      
+    ) #,
+  #   label = c(
+  #     
+  #     'Optional Description of the 0-4 Link',
+  #     'Optional Description of the 0-5 Link',
+  #     'Optional Description of the 0-6 Link',
+  #     'Optional Description of the 0-7 Link',
+  #     
+  #     'Optional Description of the 1-4 Link',
+  #     'Optional Description of the 1-5 Link',
+  #     'Optional Description of the 1-6 Link',
+  #     'Optional Description of the 1-7 Link',
+  #     
+  #     'Optional Description of the 2-4 Link',
+  #     'Optional Description of the 2-5 Link',
+  #     'Optional Description of the 2-6 Link',
+  #     'Optional Description of the 2-7 Link',
+  #     
+  #     'Optional Description of the 3-4 Link',
+  #     'Optional Description of the 3-5 Link',
+  #     'Optional Description of the 3-6 Link',
+  #     'Optional Description of the 3-7 Link',
+  #     
+  #     'Optional Description of the 4-8 Link',
+  #     'Optional Description of the 4-9 Link',
+  #     'Optional Description of the 4-10 Link',
+  #     'Optional Description of the 4-11 Link',
+  #     
+  #     'Optional Description of the 5-8 Link',
+  #     'Optional Description of the 5-9 Link',
+  #     'Optional Description of the 5-10 Link',
+  #     'Optional Description of the 5-11 Link',
+  #     
+  #     'Optional Description of the 6-8 Link',
+  #     'Optional Description of the 6-9 Link',
+  #     'Optional Description of the 6-10 Link',
+  #     'Optional Description of the 6-11 Link',
+  #     
+  #     'Optional Description of the 7-8 Link',
+  #     'Optional Description of the 7-9 Link',
+  #     'Optional Description of the 7-10 Link',
+  #     'Optional Description of the 7-11 Link',
+  #     
+  #   )
+  )
+) |>
+  # layout(
+  #   xaxis = list(showgrid = TRUE, zeroline = TRUE),
+  #   yaxis = list(showgrid = TRUE, zeroline = TRUE)
+  # ) |>
+  # layout(
+  #   title = list(
+  #     text = 'Outcome Changes between the different timepoints',
+  #     font = list(size = 13),
+  #     x = 0.5,
+  #     y = 1.1
+  #   )
+  # ) |>
+  add_annotations(
+    x = 0, xref = 'paper', xalign = 'left',
+    y = 1.05, yref = 'paper',
+    text = 'Start vs Completion',
+    showarrow = FALSE
+  ) |>
+  add_annotations(
+    x = 0.5, xref = 'paper', xalign = 'center',
+    y = 1.05, yref = 'paper',
+    text = 'Completion vs Publication',
+    showarrow = FALSE
+  ) |>
+  add_annotations(
+    x = 1, xref = 'paper', xalign = 'right',
+    y = 1.05, yref = 'paper',
+    text = 'Publication vs Latest Entry', # the 'finalised' figure still just says 'latest'!
+    showarrow = FALSE
+  )
+
+Figure3_Revisions
 
 
 
