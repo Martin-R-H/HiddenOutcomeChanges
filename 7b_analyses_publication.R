@@ -1085,7 +1085,7 @@ summary(model_RQ2)
 exp(coef(model_RQ2))
 ## retrieve the confidence intervals for the Odds Ratios - but is this necessary,
 ## since this is no sample?
-exp(confint(model_RQ2))
+round(exp(confint(model_RQ2)), 2)
 ## the finalfit package automatically creates a table with frequencies and means
 explanatory <- c(
   'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
@@ -1128,7 +1128,7 @@ summary(model_RQ4)
 ## using options(scipen=999)
 exp(coef(model_RQ4))
 ## retrieve the confidence intervals for the Odds Ratios
-exp(confint(model_RQ4))
+round(exp(confint(model_RQ4)), 2)
 ## the finalfit package automatically creates a table with frequencies and means
 explanatory <- c(
   'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
