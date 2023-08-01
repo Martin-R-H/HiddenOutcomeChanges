@@ -877,8 +877,9 @@ Figure4 <- upset(
   order.by = c('freq'),
   point.size = 3,
   line.size = 1.5,
-  sets.x.label = 'Discrepancies across timepoints',
-  mainbar.y.label = 'Number of trials'
+  text.scale = c(1.2, 1, 0.9, 1, 1.2),
+  sets.x.label = 'Comparisons between timepoints', #  (and number of trials of each)
+  mainbar.y.label = 'Number of trials' #  with each combination of discrepancies
 )
 Figure4
 
@@ -904,8 +905,9 @@ FigureS1 <- upset(
   order.by = c('freq'),
   point.size = 3,
   line.size = 1.5,
-  sets.x.label = 'Major disc. across timepoints',
-  mainbar.y.label = 'Number of trials'
+  text.scale = c(1.2, 1, 0.9, 1, 1.2),
+  sets.x.label = 'Comparisons between timepoints',
+  mainbar.y.label = 'Number of trials with major discrepancies'
 )
 FigureS1
 
@@ -931,8 +933,9 @@ FigureS2 <- upset(
   order.by = c('freq'),
   point.size = 3,
   line.size = 1.5,
-  sets.x.label = 'Minor disc. across timepoints',
-  mainbar.y.label = 'Number of trials'
+  text.scale = c(1.2, 1, 1.2, 1, 1.2),
+  sets.x.label = 'Comparisons between timepoints',
+  mainbar.y.label = 'Number of trials with minor discrepancies'
 )
 FigureS2
 
