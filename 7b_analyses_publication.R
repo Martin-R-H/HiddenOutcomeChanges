@@ -1349,3 +1349,47 @@ dat_final <- dat %>%
 dat_final %>% write_csv(
   'data/ASCERTAIN_Dataset_final.csv'
 )
+
+
+
+## ---- ADDITIONAL ANALYSIS ----------------------------------------------------
+
+## analysis requested by a reviewer
+
+dat_pub_addition <- dat_pub |>
+  filter(pub_sig_outcome != 'multiple_primaries') |> # drop trials with multiple primary outcomes
+  mutate(
+    outcome_significance = case_when(
+      pub_sig_outcome == 'all_significant' | pub_sig_outcome == 'some_significant' ~ TRUE,
+      TRUE ~ FALSE
+    )
+  ) |>
+  mutate(
+    p_o_change_any = if_else(
+      p_o_change_anywithin == TRUE | p_o_change_reg_pub == TRUE,
+      TRUE,
+      FALSE
+    )
+  )
+
+## the model will be estimated with a generalised linear model (logistic
+## regression)
+model_addition <- glm(
+  outcome_significance ~ p_o_change_any, # or p_o_change_reg_pub?``
+  family="binomial",
+  data = dat_pub_addition
+)
+summary(model_addition)
+## for interpretability, get the exponentiated coefficients, which transformes
+## them into odds rations
+## to do this, it is sometimes helpful to turn off scientific notation in R
+## using options(scipen=999)
+exp(coef(model_addition))
+## retrieve the confidence intervals for the Odds Ratios
+exp(confint(model_addition))
+## the finalfit package automatically creates a table with frequencies and means
+explanatory <- 'p_o_change_any'
+dependent <- 'outcome_significance'
+table_addition <- finalfit(dat_pub_addition, dependent, explanatory)
+## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
+hltest(model_addition)
