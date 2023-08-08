@@ -552,6 +552,30 @@ Figure3
 ## keeping in mind the possibility of changes at multiple time points -, we do
 ## a Sankey Plot for changes for the published trials.
 
+## CATEGORIES ARE NOT UNIQUE; WE SHOULD PROABABLY DO THAT OR THEY DO NOT ADD UP!
+dat_F3 <- dat %>%
+  mutate(
+    p_o_change_nonsevere_rec_M = case_when(
+      p_o_change_nonsevere_rec == TRUE & p_o_change_severe_rec == FALSE ~ TRUE,
+      p_o_change_nonsevere_rec == TRUE & p_o_change_severe_rec == TRUE ~ FALSE,
+      p_o_change_nonsevere_rec == FALSE ~ FALSE
+    )
+  ) %>%
+  mutate(
+    p_o_change_nonsevere_postcomp_M = case_when(
+      p_o_change_nonsevere_postcomp == TRUE & p_o_change_severe_postcomp == FALSE ~ TRUE,
+      p_o_change_nonsevere_postcomp == TRUE & p_o_change_severe_postcomp == TRUE ~ FALSE,
+      p_o_change_nonsevere_postcomp == FALSE ~ FALSE
+    )
+  ) %>%
+  mutate(
+    p_o_change_nonsevere_postpub_M = case_when(
+      p_o_change_nonsevere_postpub == TRUE & p_o_change_severe_postpub == FALSE ~ TRUE,
+      p_o_change_nonsevere_postpub == TRUE & p_o_change_severe_postpub == TRUE ~ FALSE,
+      p_o_change_nonsevere_postpub == FALSE ~ FALSE
+    )
+  )
+
 Figure3_Revisions <- plot_ly(
   type = 'sankey',
   orientation = 'h',
@@ -559,50 +583,51 @@ Figure3_Revisions <- plot_ly(
     label = dat_Figure3_nodes$name,
     color = c('#FE6100', '#DC267F', '#785EF0', '#648FFF', '#FE6100', '#DC267F', '#785EF0', '#648FFF', '#FE6100', '#DC267F', '#785EF0', '#648FFF')
   ),
+  valueformat = ".0f",
   link = list(
     source = c(0,0,0,0, 1,1,1,1, 2,2,2,2, 3,3,3,3, 4,4,4,4, 5,5,5,5, 6,6,6,6, 7,7,7,7),
     target = c(4,5,6,7, 4,5,6,7, 4,5,6,7, 4,5,6,7, 8,9,10,11, 8,9,10,11, 8,9,10,11, 8,9,10,11),
     value = c(
       
-      nrow(filter(dat, p_o_change_severe_rec == TRUE & p_o_change_severe_postcomp == TRUE)), # Major (Start vs Completion) [0] AND Major (Completion vs Pub.) [4]
-      nrow(filter(dat, p_o_change_severe_rec == TRUE & p_o_change_nonsevere_postcomp == TRUE)), # Major (Start vs Completion) [0] AND Minor (Completion vs Pub.) [5]
-      nrow(filter(dat, p_o_change_severe_rec == TRUE & no_change_postcomp == TRUE)), # Major (Start vs Completion) [0] AND No Changes (Completion vs Pub.) [6]
-      nrow(filter(dat, p_o_change_severe_rec == TRUE & no_postcomp_phase == TRUE)), # Major (Start vs Completion) [0] AND No Information [7]
+      nrow(filter(dat_F3, p_o_change_severe_rec == TRUE & p_o_change_severe_postcomp == TRUE)), # Major (Start vs Completion) [0] AND Major (Completion vs Pub.) [4]
+      nrow(filter(dat_F3, p_o_change_severe_rec == TRUE & p_o_change_nonsevere_postcomp_M == TRUE)), # Major (Start vs Completion) [0] AND Minor (Completion vs Pub.) [5]
+      nrow(filter(dat_F3, p_o_change_severe_rec == TRUE & no_change_postcomp == TRUE)), # Major (Start vs Completion) [0] AND No Changes (Completion vs Pub.) [6]
+      nrow(filter(dat_F3, p_o_change_severe_rec == TRUE & no_postcomp_phase == TRUE)), # Major (Start vs Completion) [0] AND No Information [7]
       
-      nrow(filter(dat, p_o_change_nonsevere_rec == TRUE & p_o_change_severe_postcomp == TRUE)), # Minor (Start vs Completion) [1] AND Major (Completion vs Pub.) [4]
-      nrow(filter(dat, p_o_change_nonsevere_rec == TRUE & p_o_change_nonsevere_postcomp == TRUE)), # Minor (Start vs Completion) [1] AND Minor (Completion vs Pub.) [5]
-      nrow(filter(dat, p_o_change_nonsevere_rec == TRUE & no_change_postcomp == TRUE)), # Minor (Start vs Completion) [1] AND No Changes (Completion vs Pub.) [6]
-      nrow(filter(dat, p_o_change_nonsevere_rec == TRUE & no_postcomp_phase == TRUE)), # Minor (Start vs Completion) [1] AND No Information [7]
+      nrow(filter(dat_F3, p_o_change_nonsevere_rec_M == TRUE & p_o_change_severe_postcomp == TRUE)), # Minor (Start vs Completion) [1] AND Major (Completion vs Pub.) [4]
+      nrow(filter(dat_F3, p_o_change_nonsevere_rec_M == TRUE & p_o_change_nonsevere_postcomp_M == TRUE)), # Minor (Start vs Completion) [1] AND Minor (Completion vs Pub.) [5]
+      nrow(filter(dat_F3, p_o_change_nonsevere_rec_M == TRUE & no_change_postcomp == TRUE)), # Minor (Start vs Completion) [1] AND No Changes (Completion vs Pub.) [6]
+      nrow(filter(dat_F3, p_o_change_nonsevere_rec_M == TRUE & no_postcomp_phase == TRUE)), # Minor (Start vs Completion) [1] AND No Information [7]
       
-      nrow(filter(dat, no_change_rec == TRUE & p_o_change_severe_postcomp == TRUE)), # No Changes (Start vs Completion) [2] AND Major (Completion vs Pub.) [4]
-      nrow(filter(dat, no_change_rec == TRUE & p_o_change_nonsevere_postcomp == TRUE)), # No Changes (Start vs Completion) [2] AND Minor (Completion vs Pub.) [5]
-      nrow(filter(dat, no_change_rec == TRUE & no_change_postcomp == TRUE)), # No Changes (Start vs Completion) [2] AND No Changes (Completion vs Pub.) [6]
-      nrow(filter(dat, no_change_rec == TRUE & no_postcomp_phase == TRUE)), # No Changes (Start vs Completion) [2] AND No Information [7]
+      nrow(filter(dat_F3, no_change_rec == TRUE & p_o_change_severe_postcomp == TRUE)), # No Changes (Start vs Completion) [2] AND Major (Completion vs Pub.) [4]
+      nrow(filter(dat_F3, no_change_rec == TRUE & p_o_change_nonsevere_postcomp_M == TRUE)), # No Changes (Start vs Completion) [2] AND Minor (Completion vs Pub.) [5]
+      nrow(filter(dat_F3, no_change_rec == TRUE & no_change_postcomp == TRUE)), # No Changes (Start vs Completion) [2] AND No Changes (Completion vs Pub.) [6]
+      nrow(filter(dat_F3, no_change_rec == TRUE & no_postcomp_phase == TRUE)), # No Changes (Start vs Completion) [2] AND No Information [7]
       
-      nrow(filter(dat, no_rec_phase == TRUE & p_o_change_severe_postcomp == TRUE)), # No Information [3] AND Major (Completion vs Pub.) [4]
-      nrow(filter(dat, no_rec_phase == TRUE & p_o_change_nonsevere_postcomp == TRUE)), # No Information [3] AND Minor (Completion vs Pub.) [5]
-      nrow(filter(dat, no_rec_phase == TRUE & no_change_postcomp == TRUE)), # No Information [3] AND No Changes (Completion vs Pub.) [6]
-      nrow(filter(dat, no_rec_phase == TRUE & no_postcomp_phase == TRUE)), # No Information [3] AND No Information [7]
+      nrow(filter(dat_F3, no_rec_phase == TRUE & p_o_change_severe_postcomp == TRUE)), # No Information [3] AND Major (Completion vs Pub.) [4]
+      nrow(filter(dat_F3, no_rec_phase == TRUE & p_o_change_nonsevere_postcomp_M == TRUE)), # No Information [3] AND Minor (Completion vs Pub.) [5]
+      nrow(filter(dat_F3, no_rec_phase == TRUE & no_change_postcomp == TRUE)), # No Information [3] AND No Changes (Completion vs Pub.) [6]
+      nrow(filter(dat_F3, no_rec_phase == TRUE & no_postcomp_phase == TRUE)), # No Information [3] AND No Information [7]
       
-      nrow(filter(dat, p_o_change_severe_postcomp == TRUE & p_o_change_severe_postpub == TRUE)), # Major (Completion vs Pub.) [4] AND Major (Pub. vs Latest) [8]
-      nrow(filter(dat, p_o_change_severe_postcomp == TRUE & p_o_change_nonsevere_postpub == TRUE)), # Major (Completion vs Pub.) [4] AND Minor (Pub. vs Latest) [9]
-      nrow(filter(dat, p_o_change_severe_postcomp == TRUE & no_change_postpub == TRUE)), # Major (Completion vs Pub.) [4] AND No Changes (Pub. vs Latest) [10]
-      nrow(filter(dat, p_o_change_severe_postcomp == TRUE & no_postpub_phase == TRUE)), # Major (Completion vs Pub.) [4] AND No Information [11]
+      nrow(filter(dat_F3, p_o_change_severe_postcomp == TRUE & p_o_change_severe_postpub == TRUE)), # Major (Completion vs Pub.) [4] AND Major (Pub. vs Latest) [8]
+      nrow(filter(dat_F3, p_o_change_severe_postcomp == TRUE & p_o_change_nonsevere_postpub_M == TRUE)), # Major (Completion vs Pub.) [4] AND Minor (Pub. vs Latest) [9]
+      nrow(filter(dat_F3, p_o_change_severe_postcomp == TRUE & no_change_postpub == TRUE)), # Major (Completion vs Pub.) [4] AND No Changes (Pub. vs Latest) [10]
+      nrow(filter(dat_F3, p_o_change_severe_postcomp == TRUE & no_postpub_phase == TRUE)), # Major (Completion vs Pub.) [4] AND No Information [11]
       
-      nrow(filter(dat, p_o_change_nonsevere_postcomp == TRUE & p_o_change_severe_postpub == TRUE)), # Minor (Completion vs Pub.) [5] AND Major (Pub. vs Latest) [8]
-      nrow(filter(dat, p_o_change_nonsevere_postcomp == TRUE & p_o_change_nonsevere_postpub == TRUE)), # Minor (Completion vs Pub.) [5] AND Minor (Pub. vs Latest) [9]
-      nrow(filter(dat, p_o_change_nonsevere_postcomp == TRUE & no_change_postpub == TRUE)), # Minor (Completion vs Pub.) [5] AND No Changes (Pub. vs Latest) [10]
-      nrow(filter(dat, p_o_change_nonsevere_postcomp == TRUE & no_postpub_phase == TRUE)), # Minor (Completion vs Pub.) [5] AND No Information [11]
+      nrow(filter(dat_F3, p_o_change_nonsevere_postcomp_M == TRUE & p_o_change_severe_postpub == TRUE)), # Minor (Completion vs Pub.) [5] AND Major (Pub. vs Latest) [8]
+      nrow(filter(dat_F3, p_o_change_nonsevere_postcomp_M == TRUE & p_o_change_nonsevere_postpub_M == TRUE)), # Minor (Completion vs Pub.) [5] AND Minor (Pub. vs Latest) [9]
+      nrow(filter(dat_F3, p_o_change_nonsevere_postcomp_M == TRUE & no_change_postpub == TRUE)), # Minor (Completion vs Pub.) [5] AND No Changes (Pub. vs Latest) [10]
+      nrow(filter(dat_F3, p_o_change_nonsevere_postcomp_M == TRUE & no_postpub_phase == TRUE)), # Minor (Completion vs Pub.) [5] AND No Information [11]
       
-      nrow(filter(dat, no_change_postcomp == TRUE & p_o_change_severe_postpub == TRUE)), # No Changes (Completion vs Pub.) [6] AND Major (Pub. vs Latest) [8]
-      nrow(filter(dat, no_change_postcomp == TRUE & p_o_change_nonsevere_postpub == TRUE)), # No Changes (Completion vs Pub.) [6] AND Minor (Pub. vs Latest) [9]
-      nrow(filter(dat, no_change_postcomp == TRUE & no_change_postpub == TRUE)), # No Changes (Completion vs Pub.) [6] AND No Changes (Pub. vs Latest) [10]
-      nrow(filter(dat, no_change_postcomp == TRUE & no_postpub_phase == TRUE)), # No Changes (Completion vs Pub.) [6] AND No Information [11]
+      nrow(filter(dat_F3, no_change_postcomp == TRUE & p_o_change_severe_postpub == TRUE)), # No Changes (Completion vs Pub.) [6] AND Major (Pub. vs Latest) [8]
+      nrow(filter(dat_F3, no_change_postcomp == TRUE & p_o_change_nonsevere_postpub_M == TRUE)), # No Changes (Completion vs Pub.) [6] AND Minor (Pub. vs Latest) [9]
+      nrow(filter(dat_F3, no_change_postcomp == TRUE & no_change_postpub == TRUE)), # No Changes (Completion vs Pub.) [6] AND No Changes (Pub. vs Latest) [10]
+      nrow(filter(dat_F3, no_change_postcomp == TRUE & no_postpub_phase == TRUE)), # No Changes (Completion vs Pub.) [6] AND No Information [11]
       
-      nrow(filter(dat, no_postcomp_phase == TRUE & p_o_change_severe_postpub == TRUE)), # No Information [7] AND Major (Pub. vs Latest) [8]
-      nrow(filter(dat, no_postcomp_phase == TRUE & p_o_change_nonsevere_postpub == TRUE)), # No Information [7] AND Minor (Pub. vs Latest) [9]
-      nrow(filter(dat, no_postcomp_phase == TRUE & no_change_postpub == TRUE)), # No Information [7] AND No Changes (Pub. vs Latest) [10]
-      nrow(filter(dat, no_postcomp_phase == TRUE & no_postpub_phase == TRUE)) # No Information [7] AND No Information [11]
+      nrow(filter(dat_F3, no_postcomp_phase == TRUE & p_o_change_severe_postpub == TRUE)), # No Information [7] AND Major (Pub. vs Latest) [8]
+      nrow(filter(dat_F3, no_postcomp_phase == TRUE & p_o_change_nonsevere_postpub_M == TRUE)), # No Information [7] AND Minor (Pub. vs Latest) [9]
+      nrow(filter(dat_F3, no_postcomp_phase == TRUE & no_change_postpub == TRUE)), # No Information [7] AND No Changes (Pub. vs Latest) [10]
+      nrow(filter(dat_F3, no_postcomp_phase == TRUE & no_postpub_phase == TRUE)) # No Information [7] AND No Information [11]
       
     ) #,
   #   label = c(
@@ -683,6 +708,7 @@ Figure3_Revisions <- plot_ly(
 
 Figure3_Revisions
 
+rm(dat_F3)
 
 
 ## ---- OBJECTIVE 3: Figures 4, S1 & S2 (UpSet Plots) --------------------------
