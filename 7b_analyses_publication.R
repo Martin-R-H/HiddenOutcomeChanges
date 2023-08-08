@@ -1108,7 +1108,7 @@ summary(model_RQ2)
 ## them into odds rations
 ## to do this, it is sometimes helpful to turn off scientific notation in R
 ## using options(scipen=999)
-exp(coef(model_RQ2))
+round(exp(coef(model_RQ2)), 2)
 ## retrieve the confidence intervals for the Odds Ratios - but is this necessary,
 ## since this is no sample?
 round(exp(confint(model_RQ2)), 2)
@@ -1152,7 +1152,7 @@ summary(model_RQ4)
 ## them into odds rations
 ## to do this, it is sometimes helpful to turn off scientific notation in R
 ## using options(scipen=999)
-exp(coef(model_RQ4))
+round(exp(coef(model_RQ4)), 2)
 ## retrieve the confidence intervals for the Odds Ratios
 round(exp(confint(model_RQ4)), 2)
 ## the finalfit package automatically creates a table with frequencies and means
@@ -1190,7 +1190,8 @@ model_RQ5 <- glm(
   data = dat_pub
 )
 summary(model_RQ5)
-exp(coef(model_RQ5)) # options(scipen=999)
+round(exp(coef(model_RQ5)), 2) # options(scipen=999)
+round(exp(confint(model_RQ5)), 2)
 ## the finalfit package automatically creates a table with frequencies and means
 explanatory <- 'p_o_change_anywithin'
 dependent <- 'p_o_change_reg_pub'
@@ -1410,9 +1411,9 @@ summary(model_addition)
 ## them into odds rations
 ## to do this, it is sometimes helpful to turn off scientific notation in R
 ## using options(scipen=999)
-exp(coef(model_addition))
+round(exp(coef(model_addition)), 2)
 ## retrieve the confidence intervals for the Odds Ratios
-exp(confint(model_addition))
+round(exp(confint(model_addition)), 2)
 ## the finalfit package automatically creates a table with frequencies and means
 explanatory <- 'p_o_change_any'
 dependent <- 'outcome_significance'
