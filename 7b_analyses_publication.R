@@ -552,7 +552,7 @@ Figure3
 ## keeping in mind the possibility of changes at multiple time points -, we do
 ## a Sankey Plot for changes for the published trials.
 
-## CATEGORIES ARE NOT UNIQUE; WE SHOULD PROABABLY DO THAT OR THEY DO NOT ADD UP!
+## create a dataset with unique categories
 dat_F3 <- dat %>%
   mutate(
     p_o_change_nonsevere_rec_M = case_when(
