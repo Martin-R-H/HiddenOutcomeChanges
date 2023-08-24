@@ -1379,11 +1379,11 @@ dat_final %>% write_csv(
 
 
 
-## ---- ADDITIONAL ANALYSIS ----------------------------------------------------
+## ---- ADDITIONAL ANALYSIS 1 --------------------------------------------------
 
 ## analysis requested by a reviewer
 
-dat_pub_addition <- dat_pub |>
+dat_pub_addition_1 <- dat_pub |>
   filter(pub_sig_outcome != 'multiple_primaries') |> # drop trials with multiple primary outcomes
   mutate(
     outcome_significance = case_when(
@@ -1401,22 +1401,78 @@ dat_pub_addition <- dat_pub |>
 
 ## the model will be estimated with a generalised linear model (logistic
 ## regression)
-model_addition <- glm(
+model_addition_1 <- glm(
   outcome_significance ~ p_o_change_any, # or p_o_change_reg_pub?``
   family="binomial",
-  data = dat_pub_addition
+  data = dat_pub_addition_1
 )
-summary(model_addition)
+summary(model_addition_1)
 ## for interpretability, get the exponentiated coefficients, which transformes
 ## them into odds rations
 ## to do this, it is sometimes helpful to turn off scientific notation in R
 ## using options(scipen=999)
-round(exp(coef(model_addition)), 2)
+round(exp(coef(model_addition_1)), 2)
 ## retrieve the confidence intervals for the Odds Ratios
-round(exp(confint(model_addition)), 2)
+round(exp(confint(model_addition_1)), 2)
 ## the finalfit package automatically creates a table with frequencies and means
 explanatory <- 'p_o_change_any'
 dependent <- 'outcome_significance'
-table_addition <- finalfit(dat_pub_addition, dependent, explanatory)
+table_addition_1 <- finalfit(dat_pub_addition_1, dependent, explanatory)
 ## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
-hltest(model_addition)
+hltest(model_addition_1)
+
+
+## ---- ADDITIONAL ANALYSIS 2 --------------------------------------------------
+
+## analysis based on a question by a reviewer
+
+## Based on publications:
+## Which trial characteristics are associated with these reporting deficits? We
+## will assess the association of ‘registry-publication’ outcome discrepancies
+## (‘classical’ outcome switching) with key candidate predictors (listed below).
+## (Equal to Research Question 4 from the preregistered protocol.)
+
+## prepare the dataset to include a 'hidden
+dat_pub_addition_2 <- dat_pub %>%
+  mutate(
+    has_hidden_changes = if_else(
+      p_o_change_reg_pub == FALSE & p_o_change_anywithin == TRUE,
+      TRUE,
+      FALSE
+    )
+  )
+
+## the model will be estimated with a generalised linear model (logistic
+## regression)
+model_addition_2 <- glm(
+  has_hidden_changes ~
+    phase_recoded +
+    main_sponsor +
+    publication_year +
+    registration_year +
+    # medical_field_recoded + ## too comnplex of a categorisation for 292 trials
+    medical_field_recoded_binary +
+    registry +
+    is_multicentric +
+    enrollment +
+    intervention_type_recoded,
+  family="binomial",
+  data = dat_pub_addition_2
+)
+summary(model_addition_2)
+## for interpretability, get the exponentiated coefficients, which transformes
+## them into odds rations
+## to do this, it is sometimes helpful to turn off scientific notation in R
+## using options(scipen=999)
+round(exp(coef(model_addition_2)), 2)
+## retrieve the confidence intervals for the Odds Ratios
+round(exp(confint(model_addition_2)), 2)
+## the finalfit package automatically creates a table with frequencies and means
+explanatory <- c(
+  'phase_recoded', 'main_sponsor', 'publication_year ', 'registration_year', 'medical_field_recoded_binary', 'registry', 'is_multicentric', 'enrollment', 'intervention_type_recoded'
+)
+dependent <- 'has_hidden_changes'
+table_addition_2 <- finalfit(dat_pub_addition_2, dependent, explanatory)
+## assess model fit using the Hosmer-Lemeshow Goodness-of-Fit Test
+hltest(model_addition_2)
+
