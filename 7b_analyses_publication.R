@@ -120,42 +120,40 @@ rm(dat_IV_add)
 ## extract journal fields based on the a copy of the Scimago Journal & Country
 ## Rank database (https://www.scimagojr.com/journalrank.php), which provides
 ## this classification
+
+source('fun/assign_medical_fields.R') # to keep the algorithm out of this script
+
 dat_fields <- read_delim('scimagojr 2021.csv', delim = ';') %>%
   rename(medical_field = 'Categories') %>%
   select(
     c(Title, medical_field)
   ) %>%
   mutate(Title = tolower(Title)) %>%
-  mutate(
-    Title = str_replace(Title, 'jama - journal of the american medical association', 'jama journal of the american medical association')
-  ) # to make sure they journal names properly match
+  rename_journals_for_matching()
 
 ## prepare matching
 dat <- dat %>%
-  mutate(journal_name_matching = tolower(journal_unpaywall)) %>%
-  mutate(
-    journal_name_matching = str_replace(journal_name_matching, 'the lancet', 'lancet')
-  ) %>%
+  mutate(journal_name_matching = journal_unpaywall) %>%
   mutate(
     journal_name_matching = if_else(
-      str_detect(journal_name_matching, 'lancet'),
-      str_c(journal_name_matching, ', the'),
+      is.na(journal_name_matching),
+      journal_pubmed,
       journal_name_matching
     )
   ) %>%
-  mutate(
-    journal_name_matching = str_replace(journal_name_matching, 'bmj(?![:blank:])', 'bmj, the'),
-    journal_name_matching = str_replace(journal_name_matching, 'jama(?![:blank:]\\w)', 'jama journal of the american medical association')
-  ) # to make sure they journal names properly match
+  mutate(journal_name_matching = tolower(journal_name_matching)) %>%
+  harmonise_journal_names()
 
 ## join the data
 dat <- dat %>%
   left_join(dat_fields, by = c('journal_name_matching' = 'Title')) %>%
   mutate(has_medical_field = !is.na(medical_field))
 
-## the merging creates a few duplicates, which now need to be removed
+## the merging creates six duplicates, which now need to be removed (it does not
+## change our assignment of medical fields)
 dat_duplicates <- dat[which(duplicated(dat$id)), ]
-rm(dat_duplicates)
+dat_duplicates_2 <- dat %>% filter(id %in% dat_duplicates$id)
+rm(dat_duplicates, dat_duplicates_2)
 dat <- dat %>%
   group_by(id) %>%
   slice_head() %>%
@@ -167,8 +165,6 @@ dat_sample_checks <- dat %>%
   filter(has_medical_field == FALSE)
 rm(dat_sample_checks)
 
-source('fun/recode_medical_fields.R') # to keep the algorithm out of this script
-
 ## recode the medical fields variable into 'General' and 'Specialty'
 dat <- dat %>%
   categorisefields_binary()
@@ -176,6 +172,7 @@ dat <- dat %>%
 ## recode the medical fields variable into a more fine-grained terminology
 dat <- dat %>%
   categorisefields()
+
 
 
 ## ---- OBJECTIVE 1: Within-Registry Discrepancies -----------------------------
