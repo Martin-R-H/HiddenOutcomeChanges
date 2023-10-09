@@ -402,11 +402,15 @@ n_hidden_changes_severe <- sum(
   na.rm = TRUE
 )
 p_hidden_changes_severe <- n_hidden_changes_severe / sum(dat$has_publication_rating)*100
+CI_hidden_changes_severe <-
+  binom.test(n_hidden_changes_severe, sum(dat$has_publication_rating))$conf.int*100
 n_hidden_changes_nonsevere <- sum(
   dat$p_o_change_reg_pub == FALSE & dat$p_o_change_nonsevere_anywithin == TRUE,
   na.rm = TRUE
 )
 p_hidden_changes_nonsevere <- n_hidden_changes_nonsevere / sum(dat$has_publication_rating)*100
+CI_hidden_changes_nonsevere <-
+  binom.test(n_hidden_changes_nonsevere, sum(dat$has_publication_rating))$conf.int*100
 
 ## changes ONLY between latest registry entry and publication, but NOT within
 ## the registry
@@ -444,11 +448,15 @@ n_within_and_reg_pub_severe <- sum(
   na.rm = TRUE
 )
 p_within_and_reg_pub_severe <- n_within_and_reg_pub_severe / sum(dat$has_publication_rating)*100
+CI_within_and_reg_pub <-
+  binom.test(n_within_and_reg_pub_severe, sum(dat$has_publication_rating))$conf.int*100
 n_within_and_reg_pub_nonsevere <- sum(
   dat$p_o_change_nonsevere_reg_pub == TRUE & dat$p_o_change_anywithin == TRUE,
   na.rm = TRUE
 )
 p_within_and_reg_pub_nonsevere <- n_within_and_reg_pub_nonsevere / sum(dat$has_publication_rating)*100
+CI_within_and_reg_pub <-
+  binom.test(n_within_and_reg_pub_nonsevere, sum(dat$has_publication_rating))$conf.int*100
 
 ## changes neither between latest registry entry and publication, nor within the
 ## registry
@@ -463,6 +471,16 @@ n_hidden_and_overt <- n_hidden_changes + n_only_reg_pub + n_within_and_reg_pub
 p_hidden_and_overt <- n_hidden_and_overt / sum(dat$has_publication_rating)*100
 CI_hidden_and_overt <-
   binom.test(n_hidden_and_overt, sum(dat$has_publication_rating))$conf.int*100
+
+n_hidden_and_overt_severe <- n_hidden_changes_severe + n_only_reg_pub_severe + n_within_and_reg_pub_severe
+p_hidden_and_overt_severe <- n_hidden_and_overt_severe / sum(dat$has_publication_rating)*100
+CI_hidden_and_overt_severe <-
+  binom.test(n_hidden_and_overt_severe, sum(dat$has_publication_rating))$conf.int*100
+
+n_hidden_and_overt_nonsevere <- n_hidden_changes_nonsevere + n_only_reg_pub_nonsevere + n_within_and_reg_pub_nonsevere
+p_hidden_and_overt_nonsevere <- n_hidden_and_overt_nonsevere / sum(dat$has_publication_rating)*100
+CI_hidden_and_overt_nonsevere <-
+  binom.test(n_hidden_and_overt_nonsevere, sum(dat$has_publication_rating))$conf.int*100
 
 ## run a test
 test_that(
