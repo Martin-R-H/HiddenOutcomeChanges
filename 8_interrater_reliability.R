@@ -506,6 +506,8 @@ irr_wh
 
 ## ---- within-history ratings: Kappa, timepoint-wise ----
 
+## (this analysis was exploratory, but not used in the final publication)
+
 ## restructure the dataset accordingly
 irr_wh_comb_t <- irr_wh_comb %>%
   group_by(trial_id, study_phase) %>%
@@ -518,6 +520,23 @@ irr_wh_comb_t <- irr_wh_comb %>%
 ## calculate Kappa, once again
 irr_wh_timepoints <- kappa2(irr_wh_comb_t[, 3:4])
 irr_wh_timepoints
+
+
+
+## ---- within-history ratings: Kappa, but for any vs no outcome change ----
+
+## (this analysis was exploratory, but not used in the final publication)
+
+## restructure the dataset - filter only the 'no change' variable, because, if 
+## both raters say 'no change' or both raters do NOT say 'no change', it means
+## they agree in the question of whether there is any outcome discrepancy vs
+## none (irrespective of the question which kind of outcome discrepancy)
+irr_wh_comb_any_vs_none <- irr_wh_comb %>%
+  filter(name == 'change_a_i_no_change' | name == 'change_i_p_no_change' | name == 'change_p_l_no_change')
+
+## calculate Kappa, once again
+irr_wh_any_vs_none <- kappa2(irr_wh_comb_any_vs_none[, 4:5])
+irr_wh_any_vs_none
 
 
 
@@ -646,6 +665,8 @@ irr_regpub
 
 
 ## ---- registry-publication ratings: Kappa, timepoint-wise ----
+
+## (this analysis was exploratory, but not used in the final publication)
 irr_regpub_comb_c <- irr_regpub_comb %>%
   group_by(trial_id) %>%
   mutate(value_Rater1_collapsed = glue_collapse(value_Rater1)) %>%
@@ -661,6 +682,8 @@ irr_regpub_cases
 
 
 ## ---- registry-publication ratings: Kappa, based on discrepancy categories ----
+
+## (this analysis was exploratory, but not used in the final publication)
 
 ## create a dataset for just the 'major discrepancies' ratings
 irr_regpub_comb_c_1 <- irr_regpub_comb %>%
@@ -724,6 +747,7 @@ irr_regpub_no_change
 
 ## ---- registry-publication ratings: Kappa, based on global categories ----
 
+## (this analysis was exploratory, but not used in the final publication)
 irr_regpub_comb_global <- irr_regpub_comb %>%
   group_by(trial_id) %>%
   mutate(
@@ -784,6 +808,23 @@ irr_regpub_comb_global_cases <- irr_regpub_comb_global %>%
   )
 
 # irr_regpub_comb_global %>% write_csv('irr_new_analysis.csv')
+
+
+
+## ---- within-history ratings: Kappa, but for any vs no outcome change ----
+
+## (this analysis was exploratory, but not used in the final publication)
+
+## restructure the dataset - filter only the 'no change' variable, because, if 
+## both raters say 'no change' or both raters do NOT say 'no change', it means
+## they agree in the question of whether there is any outcome discrepancy vs
+## none (irrespective of the question which kind of outcome discrepancy)
+irr_regpub_comb_any_vs_none <- irr_regpub_comb %>%
+  filter(name == 'pub_outcome_change_no_change')
+
+## calculate Kappa, once again
+irr_regpub_any_vs_none <- kappa2(irr_regpub_comb_any_vs_none[, 3:4])
+irr_regpub_any_vs_none
 
 
 
