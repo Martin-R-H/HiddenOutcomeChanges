@@ -150,6 +150,82 @@ recode_outcomes_severe <- function(x) {
         TRUE,
       has_publication_rating == TRUE ~ FALSE,
       TRUE ~ NA
+    ),
+    
+    p_o_change_severe_add_rec = case_when(
+      (change_a_i_new_primary == '1' |
+         change_a_i_primary_from_secondary == '1') ~
+        TRUE,
+      TRUE ~ FALSE
+    ),
+    
+    p_o_change_severe_add_postcomp = case_when(
+      (change_i_p_new_primary == '1' |
+         change_i_p_primary_from_secondary == '1') ~
+        TRUE,
+      TRUE ~ FALSE
+    ),
+    
+    p_o_change_severe_add_postpub = case_when(
+      (change_p_l_new_primary == '1' |
+         change_p_l_primary_from_secondary == '1') ~
+        TRUE,
+      TRUE ~ FALSE
+    ),
+    
+    p_o_change_severe_add_anywithin = if_else(
+      p_o_change_severe_add_rec == TRUE |
+        p_o_change_severe_add_postcomp == TRUE |
+        p_o_change_severe_add_postpub == TRUE,
+      TRUE,
+      FALSE
+    ),
+    
+    p_o_change_severe_add_reg_pub = case_when(
+      has_publication_rating == TRUE &
+        (pub_outcome_change_new_primary == '1' |
+           pub_outcome_change_primary_from_secondary == '1') ~
+        TRUE,
+      has_publication_rating == TRUE ~ FALSE,
+      TRUE ~ NA
+    ),
+    
+    p_o_change_severe_rem_rec = case_when(
+      (change_a_i_primary_omitted == '1' |
+         change_a_i_primary_to_secondary == '1') ~
+        TRUE,
+      TRUE ~ FALSE
+    ),
+    
+    p_o_change_severe_rem_postcomp = case_when(
+      (change_i_p_primary_omitted == '1' |
+         change_i_p_primary_to_secondary == '1') ~
+        TRUE,
+      TRUE ~ FALSE
+    ),
+    
+    p_o_change_severe_rem_postpub = case_when(
+      (change_p_l_primary_omitted == '1' |
+         change_p_l_primary_to_secondary == '1') ~
+        TRUE,
+      TRUE ~ FALSE
+    ),
+    
+    p_o_change_severe_rem_anywithin = if_else(
+      p_o_change_severe_rem_rec == TRUE |
+        p_o_change_severe_rem_postcomp == TRUE |
+        p_o_change_severe_rem_postpub == TRUE,
+      TRUE,
+      FALSE
+    ),
+    
+    p_o_change_severe_rem_reg_pub = case_when(
+      has_publication_rating == TRUE &
+        (pub_outcome_change_primary_omitted == '1' |
+           pub_outcome_change_primary_to_secondary == '1') ~
+        TRUE,
+      has_publication_rating == TRUE ~ FALSE,
+      TRUE ~ NA
     )
     
   )

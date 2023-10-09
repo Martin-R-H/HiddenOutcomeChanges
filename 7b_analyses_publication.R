@@ -193,6 +193,12 @@ p_any_any <- sum(dat$p_o_change_anywithin)/nrow(dat)*100
 ## severe changes in any phase
 n_severe_any <- sum(dat$p_o_change_severe_anywithin)
 p_severe_any <- sum(dat$p_o_change_severe_anywithin)/nrow(dat)*100
+## severe changes (additions) in any phase
+n_severe_add_any <- sum(dat$p_o_change_severe_add_anywithin)
+p_severe_add_any <- sum(dat$p_o_change_severe_add_anywithin)/nrow(dat)*100
+## severe changes (deletions) in any phase
+n_severe_rem_any <- sum(dat$p_o_change_severe_rem_anywithin)
+p_severe_rem_any <- sum(dat$p_o_change_severe_rem_anywithin)/nrow(dat)*100
 ## non-severe changes in any phase
 n_nonsevere_any <- sum(dat$p_o_change_nonsevere_anywithin)
 p_nonsevere_any <- sum(dat$p_o_change_nonsevere_anywithin)/nrow(dat)*100
@@ -215,6 +221,12 @@ p_any_rec <- sum(dat$p_o_change_rec)/nrow(dat)*100
 ## severe changes in recruitment phase
 n_severe_rec <- sum(dat$p_o_change_severe_rec)
 p_severe_rec <- sum(dat$p_o_change_severe_rec)/nrow(dat)*100
+## severe changes (additions) in recruitment phase
+n_severe_add_rec <- sum(dat$p_o_change_severe_add_rec)
+p_severe_add_rec <- sum(dat$p_o_change_severe_add_rec)/nrow(dat)*100
+## severe changes (deletions) in recruitment phase
+n_severe_rem_rec <- sum(dat$p_o_change_severe_rem_rec)
+p_severe_rem_rec <- sum(dat$p_o_change_severe_rem_rec)/nrow(dat)*100
 ## non-severe changes in recruitment phase
 n_nonsevere_rec <- sum(dat$p_o_change_nonsevere_rec)
 p_nonsevere_rec <- sum(dat$p_o_change_nonsevere_rec)/nrow(dat)*100
@@ -237,6 +249,12 @@ p_any_postcomp <- sum(dat$p_o_change_postcomp)/nrow(dat)*100
 ## severe changes in post-completion phase
 n_severe_postcomp <- sum(dat$p_o_change_severe_postcomp)
 p_severe_postcomp <- sum(dat$p_o_change_severe_postcomp)/nrow(dat)*100
+## severe changes (additions) in post-completion phase
+n_severe_add_postcomp <- sum(dat$p_o_change_severe_add_postcomp)
+p_severe_add_postcomp <- sum(dat$p_o_change_severe_add_postcomp)/nrow(dat)*100
+## severe changes (deletions) in post-completion phase
+n_severe_rem_postcomp <- sum(dat$p_o_change_severe_rem_postcomp)
+p_severe_rem_postcomp <- sum(dat$p_o_change_severe_rem_postcomp)/nrow(dat)*100
 ## non-severe changes in post-completion phase
 n_nonsevere_postcomp <- sum(dat$p_o_change_nonsevere_postcomp)
 p_nonsevere_postcomp <- sum(dat$p_o_change_nonsevere_postcomp)/nrow(dat)*100
@@ -259,6 +277,12 @@ p_any_postpub <- sum(dat$p_o_change_postpub)/nrow(dat)*100
 ## severe changes in post-publication phase
 n_severe_postpub <- sum(dat$p_o_change_severe_postpub)
 p_severe_postpub <- sum(dat$p_o_change_severe_postpub)/nrow(dat)*100
+## severe changes (additions) in post-publication phase
+n_severe_add_postpub <- sum(dat$p_o_change_severe_add_postpub)
+p_severe_add_postpub <- sum(dat$p_o_change_severe_add_postpub)/nrow(dat)*100
+## severe changes (deletions) in post-publication phase
+n_severe_rem_postpub <- sum(dat$p_o_change_severe_rem_postpub)
+p_severe_rem_postpub <- sum(dat$p_o_change_severe_rem_postpub)/nrow(dat)*100
 ## non-severe changes in post-publication phase
 n_nonsevere_postpub <- sum(dat$p_o_change_nonsevere_postpub)
 p_nonsevere_postpub <- sum(dat$p_o_change_nonsevere_postpub)/nrow(dat)*100
@@ -317,6 +341,16 @@ n_severe_reg_pub <- sum(dat$p_o_change_severe_reg_pub, na.rm = T)
 p_severe_reg_pub <- sum(dat$p_o_change_severe_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
 CI_severe_reg_pub <-
   binom.test(n_severe_reg_pub, sum(dat$has_publication_rating))$conf.int*100
+## severe changes (additions) between latest registry entry and publication
+n_severe_add_reg_pub <- sum(dat$p_o_change_severe_add_reg_pub, na.rm = T)
+p_severe_add_reg_pub <- sum(dat$p_o_change_severe_add_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
+CI_severe_add_reg_pub <-
+  binom.test(n_severe_add_reg_pub, sum(dat$has_publication_rating))$conf.int*100
+## severe changes (deletions) between latest registry entry and publication
+n_severe_rem_reg_pub <- sum(dat$p_o_change_severe_rem_reg_pub, na.rm = T)
+p_severe_rem_reg_pub <- sum(dat$p_o_change_severe_rem_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
+CI_severe_rem_reg_pub <-
+  binom.test(n_severe_rem_reg_pub, sum(dat$has_publication_rating))$conf.int*100
 ## non-severe changes between latest registry entry and publication
 n_nonsevere_reg_pub <- sum(dat$p_o_change_nonsevere_reg_pub, na.rm = T)
 p_nonsevere_reg_pub <- sum(dat$p_o_change_nonsevere_reg_pub, na.rm = T)/sum(dat$has_publication_rating)*100
@@ -1219,6 +1253,16 @@ n_severe_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_severe_reg_pub, na.rm 
 p_severe_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_severe_reg_pub, na.rm = T)/sum(dat_pub_sensitivity$has_publication_rating)*100
 CI_severe_reg_pub_freq_SA <-
   binom.test(n_severe_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
+## severe changes (additions) between latest registry entry and publication
+n_severe_add_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_severe_add_reg_pub, na.rm = T)
+p_severe_add_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_severe_add_reg_pub, na.rm = T)/sum(dat_pub_sensitivity$has_publication_rating)*100
+CI_severe_add_reg_pub_freq_SA <-
+  binom.test(n_severe_add_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
+## severe changes between latest registry entry and publication
+n_severe_rem_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_severe_rem_reg_pub, na.rm = T)
+p_severe_rem_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_severe_rem_reg_pub, na.rm = T)/sum(dat_pub_sensitivity$has_publication_rating)*100
+CI_severe_rem_reg_pub_freq_SA <-
+  binom.test(n_severe_rem_reg_pub_SA, sum(dat_pub_sensitivity$has_publication_rating))$conf.int*100
 ## non-severe changes between latest registry entry and publication
 n_nonsevere_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_nonsevere_reg_pub, na.rm = T)
 p_nonsevere_reg_pub_SA <- sum(dat_pub_sensitivity$p_o_change_nonsevere_reg_pub, na.rm = T)/sum(dat_pub_sensitivity$has_publication_rating)*100
