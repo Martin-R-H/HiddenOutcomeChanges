@@ -433,7 +433,7 @@ categorisefields <- function(x) {
         'Health Professions',
       
       # Others, which are mostly trials with no matched journal name
-      TRUE ~ 'No medical field assigned'
+      TRUE ~ 'Other / No medical field assigned'
     )
   )
 }
